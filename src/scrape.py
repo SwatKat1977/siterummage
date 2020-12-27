@@ -1,86 +1,9 @@
 import hashlib
 import requests
-#from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from lxml import html, etree
 from http_status_code import HTTPStatusCode
+from scraped_page_builder import ScrapedPageBuilder
 
-# requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-class ScrapedPage:
-    __slots__ = ['_description', '_domain', '_page_hash', '_title', '_url_path']
-
-    @property
-    def description(self):
-        return self._description
-
-    @property
-    def domain(self):
-        return self._domain
-
-    @property
-    def page_hash(self):
-        return self._page_hash
-
-    @property
-    def url_path(self):
-        return self._url_path
-
-    def __init__(self, description, domain, page_hash, url_path):
-        self._description = description
-        self._domain = domain
-        self._page_hash = page_hash
-        self._url_path = url_path
-
-
-class ScrapedPageBuilder:
-    __slots__ = ['_description', '_domain', '_hash', '_title', '_url_path']
-
-    def set_description(self, value):
-        self._description = value
-        return self
-
-    def set_domain(self, value):
-        self._domain = value
-        return self
-
-    def set_hash(self, value):
-        self._hash = value
-        return self
-
-    def set_title(self, value):
-        self._title = value
-        return self
-
-    def set_url_path(self, value):
-        self._url_path = value
-        return self
-
-    def __init__(self):
-        self._description = ''
-        self._domain = None
-        self._hash = None
-        self._title = ''
-        self._url_path = None
-
-    def build(self):
-        if not self._domain:
-            raise AttributeError('Missing domain attribute')
-
-        if not self._hash:
-            raise AttributeError('Missing hash attribute')
-
-        if not self._url_path:
-            raise AttributeError('Missing url path attribute')
-
-        return ScrapedPage(self._description, self._domain,  self._hash,
-                           self._url_path)
-
-    def reset(self):
-        self._description = ''
-        self._domain = None
-        self._hash = None
-        self._title = ''
-        self._url_path = None
 
 Website_http = 'http://'
 Website_https = 'https://'
@@ -144,15 +67,14 @@ def ScrapePage(url):
     print(f'Domain:      {domain}')
     print(f'url path:    {url_path}')
 
-    return ScrapedPage(description, domain, hash, url_path)
-
-    #print(dir(html_tree))
+    return builder.set_description(description).set_domain(domain)\
+        .set_hash(hash).set_title(title).set_url_path(url_path).build()
 
     # print(page_contents)
 
 def main():
     #ScrapePage('https://en.wikipedia.org/wiki/Chitty_Chitty_Bang_Bang')
-    ScrapePage('https://www.tesco.com')
+    ScrapePage('https://www.tesco.com/')
 
     # return
 
