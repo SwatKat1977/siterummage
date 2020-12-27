@@ -82,6 +82,14 @@ class ScrapedPageBuilder:
         self._title = ''
         self._url_path = None
 
+Website_http = 'http://'
+Website_https = 'https://'
+
+Website_types = {
+    'http' : 7,
+    'https' : 8
+}
+
 def ScrapePage(url):
     builder = ScrapedPageBuilder()
 
@@ -89,16 +97,31 @@ def ScrapePage(url):
     domain = None
     hash = None
     title = ''
-    url_path = None
+    url_path = ''
 
     user_agent = {'User-agent': 'Mozilla/5.0'}
     page = requests.get(url, headers = user_agent)
 
-    print(f'status code : {page.status_code}')
-
     if page.status_code != HTTPStatusCode.OK:
         print(f"URL '{url} returned status code {page.status_code}")
         return
+
+    index_for_domain = -1
+    if url.startswith(Website_http):
+        index_for_domain = Website_types['http']
+
+    elif url.startswith(Website_https):
+        index_for_domain = Website_types['https']
+
+    domain_index = url.rfind('/', index_for_domain)
+
+    if domain_index != -1:
+        domain = url[0:domain_index]
+        url_path = url[domain_index:]
+
+    else:
+        domain = url
+        url_path = '/'
 
     html_tree = html.fromstring(page.content)
     page_contents = etree.tostring(html_tree)
@@ -106,8 +129,6 @@ def ScrapePage(url):
     hash = hashlib.md5(page_contents).hexdigest()
 
     # Get meta data for page from head.
-    print('<== Head ==>')
-
     for child in html_tree.head:
         if child.tag == 'title':
             title = child.text
@@ -120,21 +141,18 @@ def ScrapePage(url):
     print(f'Title:       {title}')
     print(f"Description: {description}")
     print(f'MD5 Hash:    {hash}')
+    print(f'Domain:      {domain}')
+    print(f'url path:    {url_path}')
 
-    # so = ScrapedPage()
-    # print('description:', so.description)
-    # so.description = 'None for you'
-    # print('description:', so.description)
+    return ScrapedPage(description, domain, hash, url_path)
 
     #print(dir(html_tree))
 
     # print(page_contents)
 
-
-
 def main():
     #ScrapePage('https://en.wikipedia.org/wiki/Chitty_Chitty_Bang_Bang')
-    ScrapePage('https://www.tesco.com/')
+    ScrapePage('https://www.tesco.com')
 
     # return
 
