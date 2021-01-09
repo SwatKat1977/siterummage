@@ -1,6 +1,7 @@
 import hashlib
 import requests
 from lxml import html, etree
+from lxml.cssselect import CSSSelector
 from http_status_code import HTTPStatusCode
 from scraped_page_builder import ScrapedPageBuilder
 
@@ -66,6 +67,11 @@ def ScrapePage(url):
     print(f'MD5 Hash:    {hash}')
     print(f'Domain:      {domain}')
     print(f'url path:    {url_path}')
+
+    #dom =  lxml.html.fromstring(connection.read())
+    selAnchor = CSSSelector('a')
+    foundElements = selAnchor(html_tree)
+    print [e.get('href') for e in foundElements]
 
     return builder.set_description(description).set_domain(domain)\
         .set_hash(hash).set_title(title).set_url_path(url_path).build()
