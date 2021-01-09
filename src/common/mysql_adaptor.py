@@ -5,7 +5,7 @@ Copyright (C) 2021 Siterummage Development Team
 import mysql.connector
 import mysql.connector.pooling
 from mysql.connector import errorcode
-#from Common.MySqlInterface.MySQLConnection import MySQLConnection
+from common.MySqlInterface.MySQLConnection import MySQLConnection
 
 class MySQLAdaptor:
     ''' MySQL adaptor class '''
