@@ -68,15 +68,25 @@ def ScrapePage(url):
     print(f'Domain:      {domain}')
     print(f'url path:    {url_path}')
 
-    #dom =  lxml.html.fromstring(connection.read())
-    selAnchor = CSSSelector('a')
-    foundElements = selAnchor(html_tree)
-    print [e.get('href') for e in foundElements]
+    links = extract_links_from_page(html_tree)
+    print(f'Total links: {len(links)}')
 
     return builder.set_description(description).set_domain(domain)\
         .set_hash(hash).set_title(title).set_url_path(url_path).build()
 
     # print(page_contents)
+
+def extract_links_from_page(parsed_website):
+    # Firstly extract all of the hrefs from the webpage.
+    all_links = list(parsed_website.xpath('//a/@href'))
+
+    # Remove duplicates.
+    all_links = list(dict.fromkeys(all_links))
+
+    # Remove interal links and other invalid paths.
+    all_links = [link for link in all_links if link[0] != '#' and link[0] != '/']
+
+    return all_links
 
 def main():
     #ScrapePage('https://en.wikipedia.org/wiki/Chitty_Chitty_Bang_Bang')
