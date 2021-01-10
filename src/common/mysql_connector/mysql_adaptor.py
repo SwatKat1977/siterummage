@@ -62,6 +62,7 @@ class MySQLAdaptor:
 
     def __init__(self, user, db, host='localhost', port=3306,
                  pool_name='default_pool', pool_size=32):
+        #pylint: disable=too-many-arguments
         self._db_hostname = host
         self._db_name = db
         self._db_port = port
@@ -94,8 +95,8 @@ class MySQLAdaptor:
                                            **db_config)
             print(conn)
 
-        except mysql.connector.errors.PoolError:
-            raise RuntimeError('Connection pool exhausted')
+        except mysql.connector.errors.PoolError as mysql_except:
+            raise RuntimeError('Connection pool exhausted') from mysql_except
 
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -103,9 +104,6 @@ class MySQLAdaptor:
 
             if err.errno == errorcode.ER_BAD_DB_ERROR:
                 raise RuntimeError('Database does not exist')  from err
-
-            else:
-                raise err
 
             raise RuntimeError('Unspecified exception caught')  from err
 

@@ -120,18 +120,26 @@ class MySQLConnection:
             self._close(cursor)
             return ([], '')
 
-    ## \brief Method to release connection, not actually close it.
-    # Method to release connection back into the pool (not actually close it)
-    # and clean up the cursor object.
-    # \param self Self reference.
-    # \param connection Connection to release.
-    # \param cursor Cursor object to clean up.
-    def _close(self, cursor):
-        print('close')
+    def _close(self, cursor) -> None:
+        """!@brief Method to release connection, not actually close it.
+        @param self The object pointer
+        @param cursor Cursor object to clean up
+        @param variables An optional list of parameters for query
+        @param commit Optional flag if query be committed. Default is False
+        @param keep_conn_alive Optional flag if to keep conneciton alive
+        @returns None
+        """
         cursor.close()
         self._connection.close()
 
-    def _build_results(self, column_headers, results):
+    def _build_results(self, column_headers, results) -> list:
+        """!@brief Take the raw results from MySQL and create a user-friendly
+            output which is a list of dictionaries.
+        @param self The object pointer
+        @param column_headers List of column headers
+        @param results Raw results from MySQL
+        @returns List of dictionaries representing results.
+        """
         #pylint: disable=no-self-use
 
         # The output results set after processing the results.
