@@ -31,4 +31,3 @@ CREATE TABLE webpage_metadata
     PRIMARY KEY(id),
     FOREIGN KEY(webpage_id) REFERENCES webpage(id)
 ) DEFAULT CHARACTER SET utf8;
-
