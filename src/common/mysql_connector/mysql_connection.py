@@ -1,24 +1,31 @@
+'''
+Copyright (C) 2021 Siterummage Development Team
+'''
 import mysql.connector
 
-
 class MySQLConnection:
+    ''' MySQL connection class '''
     #spylint: disable=R0914, R0201
 
-    ## \brief Default constructor
-    # Default constructor for MySQLConnection class instance.
-    # \param self Self reference.
-    # \param connPool MySQL Connection object.
-    def __init__(self, connection):
+    def __init__(self, connection) -> object:
+        """!@brief Default constructor for MySQLConnection class.
+        @param self The object pointer
+        @param connection MySQL Connection object
+        @returns Constructed MySQLConnection instance.
+        """
         self._connection = connection
 
-    ## \brief Call a MySQL Stored procedure.  A ResultsSet is returned
-    # Call a MySQL Stored procedure.  A ResultsSet is returned, if nothing is
-    # returned then it's empty.
-    # \param self Self reference.
-    # \param procedureName Name of the procedure to call.
-    # \param params A list of parameters for the stored procedures.
     def call_stored_procedure(self, procedure_name, params=(),
                               keep_conn_alive=False):
+        """!@brief Call a MySQL Stored procedure.  A ResultsSet is returned,
+            if nothing is returned then it's empty.
+        @param self The object pointer
+        @param procedure_name Name of the procedure to call
+        @param params Optional list of parameters for the stored procedures
+        @param keep_conn_alive Optional flag if to keep conneciton alive
+        @returns Constructed MySQLConnection instance.
+        """
+
         cursor = self._connection.cursor()
 
         try:
@@ -26,9 +33,9 @@ class MySQLConnection:
 
         # It's important to check for exceptions here, which include errors in
         # the query or invalid tables/columns.
-        except mysql.connector.errors.ProgrammingError as mysqlExcept:
+        except mysql.connector.errors.ProgrammingError as mysql_except:
             self._close(cursor)
-            return (None, mysqlExcept.msg)
+            return (None, mysql_except.msg)
 
         results_set = []
 
@@ -48,8 +55,8 @@ class MySQLConnection:
         field_names = list(result_rows.pop(0))
         field_names_map = {}
         field_position = 0
-        for fieldName in field_names:
-            field_names_map[field_position] = fieldName
+        for field_name in field_names:
+            field_names_map[field_position] = field_name
             field_position += 1
 
         results_set = self._build_results(field_names_map, result_rows)
@@ -58,15 +65,17 @@ class MySQLConnection:
 
         return (results_set, '')
 
-
-    ## \brief Execute a MySQL query.  A ResultsSet is returned
-    # Execute a MySQL SQL query.  A ResultsSet is returned, if nothing is
-    # returned then it's empty.
-    # \param self Self reference.
-    # \param query SQL query to be executed.
-    # \param variables A list of parameters for query.
-    # \param commit Should query be committed.  Not default for MySQL.
     def query(self, query, variables=(), commit=False, keep_conn_alive=False):
+        """!@brief Execute a MySQL query.  A ResultsSet is returned. A
+            ResultsSet is returned, if nothing is returned then it's empty.
+        @param self The object pointer.
+        @param query SQL query to be executed
+        @param variables An optional list of parameters for query
+        @param commit Optional flag if query be committed. Default is False
+        @param keep_conn_alive Optional flag if to keep conneciton alive
+        @returns Tuple (results, error_message)
+        """
+
         cursor = self._connection.cursor()
 
         try:
@@ -82,9 +91,9 @@ class MySQLConnection:
 
         # It's important to check for exceptions here, which include errors in
         # the query or invalid tables/columns.
-        except mysql.connector.errors.ProgrammingError as mysqlExcept:
+        except mysql.connector.errors.ProgrammingError as mysql_exception:
             self._close(cursor)
-            return (None, mysqlExcept.msg)
+            return (None, mysql_exception.msg)
 
         try:
             # Fetch all of the results rows returned from MySQL.
