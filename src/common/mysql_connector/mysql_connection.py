@@ -5,7 +5,6 @@ import mysql.connector
 
 class MySQLConnection:
     ''' MySQL connection class '''
-    #spylint: disable=R0914, R0201
 
     def __init__(self, connection) -> object:
         """!@brief Default constructor for MySQLConnection class.
@@ -133,6 +132,8 @@ class MySQLConnection:
         self._connection.close()
 
     def _build_results(self, column_headers, results):
+        #pylint: disable=no-self-use
+
         # The output results set after processing the results.
         results_set = []
 
