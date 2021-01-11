@@ -101,7 +101,6 @@ class MySQLAdaptor:
             conn = mysql.connector.connect(pool_name = self._pool_name,
                                            pool_size = self._pool_size,
                                            **db_config)
-            print(conn)
 
         except mysql.connector.errors.PoolError as mysql_except:
             raise RuntimeError('Connection pool exhausted') from mysql_except
