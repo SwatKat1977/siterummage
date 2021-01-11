@@ -16,7 +16,11 @@ from common.service_base import ServiceBase
 from .version import VERSION
 
 class DatabaseSettings:
+    """ Settings related to the underlying database """
+    #pylint: disable=too-few-public-methods
+
     def __init__(self, username, database, host, port, pool_name, pool_size):
+        #pylint: disable=too-many-arguments
         self.username = username
         self.database = database
         self.host = host
@@ -67,12 +71,12 @@ class Service(ServiceBase):
 
         self._is_initialised = True
 
-        if not self.database_connection_valid():
+        if not self._database_connection_valid():
             return False
 
         return True
 
-    def database_connection_valid(self) -> True:
+    def _database_connection_valid(self) -> True:
         try:
             test_connection = self._db_adaptor.connect("master_2021")
 
@@ -97,6 +101,9 @@ class Service(ServiceBase):
             raise caught_exception
 
         test_connection.close()
+
+        self._logger.log(LogType.Info, 'Connection to database verified...')
+        return True
 
     async def _main_loop(self):
         # if not self._master_thread_class.initialise():
