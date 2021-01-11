@@ -22,6 +22,13 @@ class MySQLConnection:
         """
         self._connection = connection
 
+    def close(self) -> None:
+        """!@brief Method to release connection from pool.
+        @param self The object pointer
+        @returns None
+        """
+        self._connection.close()
+
     def call_stored_procedure(self, procedure_name, params=(),
                               keep_conn_alive=False):
         """!@brief Call a MySQL Stored procedure.  A ResultsSet is returned,
@@ -132,9 +139,6 @@ class MySQLConnection:
         """!@brief Method to release connection, not actually close it.
         @param self The object pointer
         @param cursor Cursor object to clean up
-        @param variables An optional list of parameters for query
-        @param commit Optional flag if query be committed. Default is False
-        @param keep_conn_alive Optional flag if to keep conneciton alive
         @returns None
         """
         cursor.close()

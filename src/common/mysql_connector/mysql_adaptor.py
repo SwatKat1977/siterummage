@@ -78,7 +78,7 @@ class MySQLAdaptor:
         self._pool_name = pool_name
         self._pool_size = pool_size
 
-    def connect(self, user_password):
+    def connect(self, user_password) -> MySQLConnection:
         """!@brief Connect to a MySQL server.
         @param self The object pointer.
         @returns MySQLConnection on success or RuntimeError on error.
@@ -91,7 +91,8 @@ class MySQLAdaptor:
             'port' : self._db_port,
             'user' : self._db_username,
             'password' : user_password,
-            'database' : self._db_name
+            'database' : self._db_name,
+            'connect_timeout': 1
         }
 
         try:
@@ -112,6 +113,9 @@ class MySQLAdaptor:
             if err.errno == errorcode.ER_BAD_DB_ERROR:
                 raise RuntimeError('Database does not exist')  from err
 
-            raise RuntimeError('Unspecified exception caught')  from err
+            if err.errno == errorcode.CR_CONN_HOST_ERROR:
+                raise RuntimeError('Unable to connect to database server')  from err
+
+            raise RuntimeError(f'Unhandled exception ({err.errno}) caught')  from err
 
         return MySQLConnection(conn)
