@@ -12,13 +12,15 @@ forbidden unless prior written permission is obtained from Siterummage.
 #pylint: disable=wrong-import-position
 import sys
 sys.path.insert(0,'.')
-from common.mysql_connector.mysql_adaptor import MySQLAdaptor
-
 from quart import Quart
+from common.mysql_connector.mysql_adaptor import MySQLAdaptor
+from .service import Service
 
 ## Quart application instance
 app = Quart(__name__)
 
+## Page Store microservice instance, this contains the code that is executed
+service = Service()
 
 @app.before_serving
 async def startup() -> None:
@@ -39,18 +41,18 @@ async def shutdown() -> None:
     #     await asyncio.sleep(0.5)
     print('[DEBUG] @app.after_serving')
 
-# if not service.initialise():
-#     sys.exit()
+if not service.initialise():
+    sys.exit()
 
-mysql_adaptor = MySQLAdaptor('root', 'siterummage', '127.0.0.1', 4000, pool_size=1)
+# mysql_adaptor = MySQLAdaptor('root', 'siterummage', '127.0.0.1', 4000, pool_size=1)
 
-foo = mysql_adaptor.connect('master_2021')
-print(foo.call_stored_procedure('g'))
+# foo = mysql_adaptor.connect('master_2021')
+# print(foo.call_stored_procedure('g'))
 
-foo = mysql_adaptor.connect('master_2021')
-print('2nd conn', foo)
-query = "INSERT INTO domain(id, name) VALUES(0, 'https://www.test.com')"
+# foo = mysql_adaptor.connect('master_2021')
+# print('2nd conn', foo)
+# query = "INSERT INTO domain(id, name) VALUES(0, 'https://www.test.com')"
 
-print(foo.query(query, commit=True))
-foo = mysql_adaptor.connect('master_2021')
-print(foo.query('SELECT * FROM domain'))
+# print(foo.query(query, commit=True))
+# foo = mysql_adaptor.connect('master_2021')
+# print(foo.query('SELECT * FROM domain'))

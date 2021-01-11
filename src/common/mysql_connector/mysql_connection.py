@@ -123,7 +123,6 @@ class MySQLConnection:
 
             results_set = self._build_results(field_names_map, rows)
 
-            print(keep_conn_alive)
             if not keep_conn_alive:
                 self._close(cursor)
 
