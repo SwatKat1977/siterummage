@@ -19,9 +19,8 @@ HEADERKEY_AUTH = 'AuthKey'
 
 class ApiHealth:
 
-    def __init__(self, interface_instance, logger):
+    def __init__(self, interface_instance):
         self._interface = interface_instance
-        self._logger = logger
         self._auth_key = 'TesTKeY2021'
 
         # Add route : /health/ping
@@ -37,6 +36,15 @@ class ApiHealth:
             status = HTTPStatusCode.OK, mimetype = MIMEType.Text)
 
     async def _status(self):
+
+        # Validate the request to ensure the auth key is present and valid.
+        validate_return = self._validate_auth_key()
+        if validate_return is not HTTPStatusCode.OK:
+
+            return self._interface.response_class(
+                response = json.dumps('Invalid authentication key'),
+                status = validate_return, mimetype = MIMEType.Text)
+
         status_response = {
             'health': 'Fully Functional'
         }
