@@ -17,35 +17,64 @@ from common.mime_type import MIMEType
 
 HEADERKEY_AUTH = 'AuthKey'
 
-class ApiLinks:
+class ApiWebpage:
 
     def __init__(self, interface_instance):
         self._interface = interface_instance
         self._auth_key = 'TesTKeY2021'
 
-        # Add route : /links/add
-        self._interface.add_url_rule('/links/add',
-            methods = ['POST'], view_func = self._add_link)
+        # Add route : /webpage/add
+        self._interface.add_url_rule('/webpage/add',
+            methods = ['POST'], view_func = self._add_webpage)
 
-        # Add route : /links/add
-        self._interface.add_url_rule('/links/add',
-            methods = ['POST'], view_func = self._add_link)
+        # Add route : /webpage/details
+        self._interface.add_url_rule('/webpage/details',
+            methods = ['GET'], view_func = self._get_webpage)
 
-        # # Add route : /health/status
-        # self._interface.add_url_rule('/health/status',
-        #     methods = ['GET'], view_func = self._status)
+    async def _add_webpage(self):
 
+        # Validate the request to ensure the auth key is present and valid.
+        validate_return = self._validate_auth_key()
+        if validate_return is not HTTPStatusCode.OK:
+            return self._interface.response_class(
+                response = 'Invalid authentication key',
+                status = validate_return, mimetype = MIMEType.Text)
 
-    # async def _status(self):
+        return self._interface.response_class(
+            response = 'WIP', status = HTTPStatusCode.OK,
+            mimetype = MIMEType.Text)
 
-    #     # Validate the request to ensure the auth key is present and valid.
-    #     validate_return = self._validate_auth_key()
-    #     if validate_return is not HTTPStatusCode.OK:
+    async def _get_webpage(self, page):
 
-    #         return self._interface.response_class(
-    #             response = json.dumps('Invalid authentication key'),
-    #             status = validate_return, mimetype = MIMEType.Text)
+        # Validate the request to ensure the auth key is present and valid.
+        validate_return = self._validate_auth_key()
+        if validate_return is not HTTPStatusCode.OK:
+            return self._interface.response_class(
+                response = 'Invalid authentication key',
+                status = validate_return, mimetype = MIMEType.Text)
 
-    #     status_response = {
-    #         'health': 'Fully Functional'
-    #     }
+        return self._interface.response_class(
+            response = 'WIP', status = HTTPStatusCode.OK,
+            mimetype = MIMEType.Text)
+
+    def _validate_auth_key(self):
+        """!@brief Validate the authentication key for a request.
+        @param self The object pointer.
+        @returns a status code:
+        * 200 (OK) - Authentication key good
+        * 401 (Unauthenticated) - Missing or invalid authentication key
+        * 403 (Forbidden) - Invalid authentication key
+        """
+
+        # Verify that an authorisation key exists in the request header.
+        if HEADERKEY_AUTH not in request.headers:
+            return HTTPStatusCode.Unauthenticated
+
+        authorisation_key = request.headers[HEADERKEY_AUTH]
+
+        # Verify the authorisation key against what is specified in the
+        # configuration file.  If it isn't valid then return 403 (Forbidden).
+        if authorisation_key != self._auth_key:
+            return HTTPStatusCode.Forbidden
+
+        return HTTPStatusCode.OK

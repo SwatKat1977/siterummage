@@ -16,6 +16,7 @@ from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 from common.service_base import ServiceBase
 from .version import VERSION
 from .api.health import ApiHealth
+from .api.webpage import ApiWebpage
 
 class DatabaseSettings:
     """ Settings related to the underlying database """
@@ -65,7 +66,7 @@ class Service(ServiceBase):
                                         self._db_settings.pool_size)
 
         self._api_health = ApiHealth(self._quart)
-        self._api_links = None
+        self._api_links = ApiWebpage(self._quart)
 
     def _initialise(self) -> bool:
         self._logger.write_to_console = True
