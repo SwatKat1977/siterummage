@@ -15,6 +15,7 @@ from common.core_version import CORE_VERSION
 from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 from common.service_base import ServiceBase
 from .version import VERSION
+from .api.health import ApiHealth
 
 class DatabaseSettings:
     """ Settings related to the underlying database """
@@ -41,8 +42,10 @@ class Service(ServiceBase):
     ## License text logged on initialisation etc.
     license_text = 'All Rights Reserved. Proprietary and confidential'
 
-    def __init__(self):
+    def __init__(self, new_instance):
         super().__init__()
+
+        self._quart = new_instance
 
         ## Instance of the logging wrapper class
         self._logger = Logger()
@@ -61,7 +64,7 @@ class Service(ServiceBase):
                                         self._db_settings.pool_name,
                                         self._db_settings.pool_size)
 
-        self._api_health = None
+        self._api_health = ApiHealth(self._quart)
         self._api_links = None
 
     def _initialise(self) -> bool:

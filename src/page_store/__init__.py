@@ -20,7 +20,7 @@ from .service import Service
 app = Quart(__name__)
 
 ## Page Store microservice instance, this contains the code that is executed
-service = Service()
+service = Service(app)
 
 @app.before_serving
 async def startup() -> None:
