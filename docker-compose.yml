@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.8"
 
 networks:
   localdev:
@@ -29,3 +29,17 @@ services:
   # ##############
   # ## Services ##
   # ##############
+
+  # Page store (database).
+  page-store:
+    build:
+      context: .
+      dockerfile: Dockerfile.page_store
+    container_name: page-store
+    ports:
+      - "2020:2020"
+    networks:
+      - localdev
+    links:
+      - master-db
+ 
