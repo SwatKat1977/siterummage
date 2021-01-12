@@ -12,9 +12,5 @@ forbidden unless prior written permission is obtained from Siterummage.
 
 class ApiHandler:
 
-    @property.setter
-    def SetInterface(self, interface_instance):
+    def __init__(self, interface_instance):
         self._interface = interface_instance
-
-    def __init__(self):
-        self._interface = None
