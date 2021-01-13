@@ -14,26 +14,53 @@ forbidden unless prior written permission is obtained from Siterummage.
 class HTTPStatusCode:
     ''' Definition of HTTP status codes '''
 
+    #############
+    # 2xx success
+    #############
+
     # 200 − OK
     OK = 200
 
-    # 400 − for Bad Request
+    # 201 - Created
+    Created = 201
+
+    # 202 - Accepted
+    Accepted = 202
+
+    ###################
+    # 4xx client errors
+    ###################
+
+    # 400 − Bad Request
     BadRequest = 400
 
-    # 401 − for Unauthenticated
+    # 401 − Unauthenticated
     Unauthenticated = 401
 
-    # 403 − for Forbidden
+    # 403 − Forbidden
     Forbidden = 403
 
-    # 404 − for Not Found
+    # 404 − Not Found
     NotFound = 404
 
-    # 406 − for Not Acceptable
+    # 406 − Not Acceptable
     NotAcceptable = 406
 
-    # 415 − for Unsupported Media Type
+    # 408 - Request Timeout
+    RequestTimeout = 408
+
+    # 415 − Unsupported Media Type
     UnsupportedMediaType = 415
 
     # 429 − Too Many Requests
     TooManyRequests = 429
+
+    ###################
+    # 5xx server errors
+    ###################
+
+    # 500 - Internal Server Error
+    InternalServerError = 500
+
+    # 503 - Service Unavailable
+    ServiceUnavailables = 503
