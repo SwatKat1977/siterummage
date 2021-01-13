@@ -44,7 +44,7 @@ class ApiWebpage:
             response = 'WIP', status = HTTPStatusCode.OK,
             mimetype = MIMEType.Text)
 
-    async def _get_webpage(self, page):
+    async def _get_webpage(self):
 
         # Validate the request to ensure the auth key is present and valid.
         validate_return = self._validate_auth_key()

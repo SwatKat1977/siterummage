@@ -12,24 +12,12 @@ forbidden unless prior written permission is obtained from Siterummage.
 from time import sleep
 from common.logger import Logger, LogType
 from common.core_version import CORE_VERSION
-from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 from common.service_base import ServiceBase
-from .version import VERSION
 from .api.health import ApiHealth
 from .api.webpage import ApiWebpage
-
-class DatabaseSettings:
-    """ Settings related to the underlying database """
-    #pylint: disable=too-few-public-methods
-
-    def __init__(self, username, database, host, port, pool_name, pool_size):
-        #pylint: disable=too-many-arguments
-        self.username = username
-        self.database = database
-        self.host = host
-        self.port = port
-        self.pool_name = pool_name
-        self.pool_size = pool_size
+from .configuration import Configuration, DatabaseSettings
+from .database_interface import DatabaseInterface
+from .version import VERSION
 
 class Service(ServiceBase):
     """ Siterummage Page Store microservice class """
@@ -54,19 +42,16 @@ class Service(ServiceBase):
         ## _is_initialised is inherited from parent class ServiceThread
         self._is_initialised = False
 
-        self._db_settings = DatabaseSettings('root', 'siterummage',
-                                             '127.0.0.1', 4000,
-                                             'connection_pool', 1)
-
-        self._db_adaptor = MySQLAdaptor(self._db_settings.username,
-                                        self._db_settings.database,
-                                        self._db_settings.host,
-                                        self._db_settings.port,
-                                        self._db_settings.pool_name,
-                                        self._db_settings.pool_size)
+        db_settings = DatabaseSettings('root', 'siterummage',
+                                        '127.0.0.1', 4000,
+                                        'connection_pool', 1)
+        self._configuration = Configuration(db_settings)
 
         self._api_health = ApiHealth(self._quart)
         self._api_links = ApiWebpage(self._quart)
+
+        self._db_interface = DatabaseInterface(self._logger,
+                                               self._configuration)
 
     def _initialise(self) -> bool:
         self._logger.write_to_console = True
@@ -79,50 +64,10 @@ class Service(ServiceBase):
 
         self._is_initialised = True
 
-        if not self._database_connection_valid():
+        if not self._db_interface.database_connection_valid():
             return False
 
         return True
-
-    def _database_connection_valid(self) -> True:
-        retries = 30
-
-        self._logger.log(LogType.Info, f'MySQL host is : {self._db_settings.host}')
-
-        while retries != 0:
-            try:
-                self._logger.log(LogType.Info, f'Try : {retries}')
-                test_connection = self._db_adaptor.connect("master_2021")
-                test_connection.close()
-                self._logger.log(LogType.Info, 'Connection to database verified...')
-                return True
-
-            except RuntimeError as caught_exception:
-
-                if str(caught_exception) == 'Incorrect user name or password':
-                    self._logger.log(LogType.Error,
-                                    'Invalid usernane or password for the ' \
-                                    'database, failed connect to the database')
-                    test_connection.close()
-                    return False
-
-                if str(caught_exception) == 'Database does not exist':
-                    self._logger.log(LogType.Error,
-                                    'Database does not exist, unable to ' \
-                                    'connect to the database')
-                    test_connection.close()
-                    return False
-
-                if str(caught_exception) == 'Unable to connect to database server':
-                    self._logger.log(LogType.Error,
-                                    'Unable to contact to database, retrying...')
-
-                retries -= 1
-                sleep(10)
-
-                # raise caught_exception
-
-        return False
 
     async def _main_loop(self):
         # if not self._master_thread_class.initialise():
