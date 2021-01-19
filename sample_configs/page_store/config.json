@@ -1,11 +1,11 @@
 {
     "database settings":
     {
-        "database": "string",
-        "host": "string",
+        "database": "siterummage",
+        "host": "127.0.0.1",
         "pool_name": "string",
-        "pool_size": 0,
-        "port": 0,
-        "username": "string"
+        "pool_size": 2,
+        "port": 4000,
+        "username": "root"
     }
 }

@@ -58,11 +58,14 @@ class configurationSchema:
                     },
                     'pool_size':
                     {
-                        "type" : "integer"
+                        "type" : "integer",
+                        "minimum": 1,
+                        "maximum": 32
                     },
                     'port':
                     {
-                        "type" : "integer"
+                        "type" : "integer",
+                        "minimum": 1
                     },
                     'username':
                     {
