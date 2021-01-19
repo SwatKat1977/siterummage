@@ -10,13 +10,22 @@ Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
 from time import sleep
-from common.logger import Logger, LogType
+from common.logger import LogType
 from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 
 class DatabaseInterface:
+    """ Database functionalty abstraction class """
+    #pylint: disable=too-few-public-methods
     __slots__ = ['_db_adaptor', '_config', '_logger']
 
     def __init__(self, logger, configuration):
+        """!@brief DatabaseInterface class constructor
+        @param self The object pointer.
+        @param logger Instance of Logger class.
+        @param configuration Configuration options.
+        @returns Instance of DatabaseInterface class.
+        """
+
         self._config = configuration
         self._logger = logger
 
@@ -27,7 +36,11 @@ class DatabaseInterface:
                                         self._config._db_settings.pool_name,
                                         self._config._db_settings.pool_size)
 
-    def database_connection_valid(self) -> True:
+    def database_connection_valid(self) -> bool:
+        """!@brief Check if the database connection is valid
+        @param self The object pointer.
+        @returns True = valid, False = invalid.
+        """
         retries = 30
 
         test_connection = None
