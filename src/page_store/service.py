@@ -9,13 +9,14 @@ patents in process, and are protected by trade secret or copyright law.
 Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
+import os
 from time import sleep
 from common.logger import Logger, LogType
 from common.core_version import CORE_VERSION
 from common.service_base import ServiceBase
 from .api.health import ApiHealth
 from .api.webpage import ApiWebpage
-from .configuration import Configuration, DatabaseSettings
+from .configuration_manager import ConfigurationManager
 from .database_interface import DatabaseInterface
 from .version import VERSION
 
@@ -42,16 +43,12 @@ class Service(ServiceBase):
         ## _is_initialised is inherited from parent class ServiceThread
         self._is_initialised = False
 
-        db_settings = DatabaseSettings('root', 'siterummage',
-                                        '127.0.0.1', 4000,
-                                        'connection_pool', 1)
-        self._configuration = Configuration(db_settings)
+        self._configuration = None
+
+        self._db_interface = None
 
         self._api_health = ApiHealth(self._quart)
         self._api_links = ApiWebpage(self._quart)
-
-        self._db_interface = DatabaseInterface(self._logger,
-                                               self._configuration)
 
     def _initialise(self) -> bool:
         self._logger.write_to_console = True
@@ -62,10 +59,27 @@ class Service(ServiceBase):
         self._logger.log(LogType.Info, self.copyright_text)
         self._logger.log(LogType.Info, self.license_text)
 
-        self._is_initialised = True
+        # db_settings = DatabaseSettings('root', 'siterummage',
+        #                                 '127.0.0.1', 4000,
+        #                                 'connection_pool', 1)
+        # self._configuration = Configuration(db_settings)
+
+        config_mgr = ConfigurationManager()
+
+        config_file = os.getenv('SITERUMMAGE_PAGESTORE_CONFIG')
+
+        self._configuration = config_mgr.parse_config_file(config_file)
+        if not self._configuration:
+            self._logger.log(LogType.Error, config_mgr.last_error_msg)
+            return False
+
+        self._db_interface = DatabaseInterface(self._logger,
+                                               self._configuration)
 
         if not self._db_interface.database_connection_valid():
             return False
+
+        self._is_initialised = True
 
         return True
 

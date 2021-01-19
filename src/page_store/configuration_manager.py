@@ -11,8 +11,8 @@ forbidden unless prior written permission is obtained from Siterummage.
 '''
 import json
 import jsonschema
-from configuration import Configuration, DatabaseSettings
-from configuration_schema import configurationSchema as schema
+from .configuration import Configuration, DatabaseSettings
+from .configuration_schema import configurationSchema as schema
 
 class ConfigurationManager:
 
