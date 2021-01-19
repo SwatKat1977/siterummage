@@ -19,7 +19,7 @@ class configurationSchema:
         #pylint: disable=too-few-public-methods
 
         # -- Top-level json elements --
-        toplevel_db_settings = 'db settings'
+        toplevel_db_settings = 'database settings'
 
         # -- Database Settings sub-elements --
         # ------------------------------------
@@ -58,11 +58,11 @@ class configurationSchema:
                     },
                     'pool_size':
                     {
-                        "type" : "int"
+                        "type" : "integer"
                     },
                     'port':
                     {
-                        "type" : "int"
+                        "type" : "integer"
                     },
                     'username':
                     {
