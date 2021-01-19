@@ -10,6 +10,7 @@ Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
 #pylint: disable=wrong-import-position
+import os
 import sys
 sys.path.insert(0,'.')
 from quart import Quart
@@ -40,6 +41,11 @@ async def shutdown() -> None:
     # while not service.shutdown_completed:
     #     await asyncio.sleep(0.5)
     print('[DEBUG] @app.after_serving')
+
+if not os.getenv('SITERUMMAGE_PAGESTORE_CONFIG'):
+    print('[ERROR] SITERUMMAGE_PAGESTORE_CONFIG environment variable ' + \
+                      'is not defined!')
+    sys.exit(1)
 
 if not service.initialise():
     sys.exit()
