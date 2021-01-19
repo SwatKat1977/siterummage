@@ -30,9 +30,11 @@ class DatabaseInterface:
     def database_connection_valid(self) -> True:
         retries = 30
 
+        test_connection = None
         while retries != 0:
             try:
-                self._logger.log(LogType.Info, f'Try : {retries}')
+                self._logger.log(LogType.Info,
+                                 f'Connecting to database, try : {retries}')
                 test_connection = self._db_adaptor.connect("master_2021")
                 test_connection.close()
                 self._logger.log(LogType.Info, 'Connection to database verified...')
@@ -44,14 +46,14 @@ class DatabaseInterface:
                     self._logger.log(LogType.Error,
                                     'Invalid usernane or password for the ' \
                                     'database, failed connect to the database')
-                    test_connection.close()
                     return False
 
                 if str(caught_exception) == 'Database does not exist':
                     self._logger.log(LogType.Error,
                                     'Database does not exist, unable to ' \
                                     'connect to the database')
-                    test_connection.close()
+                    if test_connection:
+                        test_connection.close()
                     return False
 
                 if str(caught_exception) == 'Unable to connect to database server':
