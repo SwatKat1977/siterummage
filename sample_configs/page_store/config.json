@@ -1,0 +1,11 @@
+{
+    "database settings":
+    {
+        "database": "string",
+        "host": "string",
+        "pool_name": "string",
+        "pool_size": 0,
+        "port": 0,
+        "username": "string"
+    }
+}
