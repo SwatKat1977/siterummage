@@ -10,23 +10,41 @@ Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
 import json
+from typing import Union
 import jsonschema
 from .configuration import Configuration, DatabaseSettings
 from .configuration_schema import configurationSchema as schema
 
 class ConfigurationManager:
+    """ Class that manages (reads) the main JSON configuration file. """
 
-    ## Property getter : Last error message
     @property
     def last_error_msg(self):
+        """!@brief Last error message (Getter).
+        @param self The object pointer.
+        @returns Last error message string or empty string if none.
+        """
         return self._last_error_msg
 
     #  @param self The object pointer.
-    def __init__(self):
+    def __init__(self) -> object:
+        """!@brief Class constructor.
+        @param self The object pointer.
+        @returns ConfigurationManager instance.
+        """
+
         self._last_error_msg = ''
 
     #  @param self The object pointer.
-    def parse_config_file(self, filename):
+    def parse_config_file(self, filename) -> Union[Configuration,None]:
+        """!@brief Parse the configuration file and then very it against the
+                   JSON schema.  Once verified return an instance of the
+                   Configuration class.
+        @param self The object pointer.
+        @param filename Filename of the configuration file to read.
+        @returns Configuration if successful, otherwise on failure return None
+                 and set the Last error message.
+        """
 
         self._last_error_msg = ''
 
@@ -64,6 +82,8 @@ class ConfigurationManager:
     ## Process the central controller api settings section.
     #  @param self The object pointer.
     def _process_db_settings(self, settings):
+        #pylint: disable=no-self-use
+
         database = settings[schema.Elements.db_settings_database]
         host = settings[schema.Elements.db_settings_host]
         pool_name = settings[schema.Elements.db_settings_pool_name]
