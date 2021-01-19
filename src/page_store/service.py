@@ -59,11 +59,6 @@ class Service(ServiceBase):
         self._logger.log(LogType.Info, self.copyright_text)
         self._logger.log(LogType.Info, self.license_text)
 
-        # db_settings = DatabaseSettings('root', 'siterummage',
-        #                                 '127.0.0.1', 4000,
-        #                                 'connection_pool', 1)
-        # self._configuration = Configuration(db_settings)
-
         config_mgr = ConfigurationManager()
 
         config_file = os.getenv('SITERUMMAGE_PAGESTORE_CONFIG')
@@ -72,6 +67,18 @@ class Service(ServiceBase):
         if not self._configuration:
             self._logger.log(LogType.Error, config_mgr.last_error_msg)
             return False
+
+        self._logger.log(LogType.Info, '+=== Configuration Settings ===+')
+        self._logger.log(LogType.Info, '+==============================+')
+        db_config = self._configuration.db_settings
+        self._logger.log(LogType.Info, '+== Database Settings :->')
+        self._logger.log(LogType.Info, f'+= database  : {db_config.database}')
+        self._logger.log(LogType.Info, f'+= host      : {db_config.host}')
+        self._logger.log(LogType.Info, f'+= username  : {db_config.username}')
+        self._logger.log(LogType.Info, f'+= port      : {db_config.port}')
+        self._logger.log(LogType.Info, f'+= pool_name : {db_config.pool_name}')
+        self._logger.log(LogType.Info, f'+= pool_size : {db_config.pool_size}')
+        self._logger.log(LogType.Info, '+==============================+')
 
         self._db_interface = DatabaseInterface(self._logger,
                                                self._configuration)
