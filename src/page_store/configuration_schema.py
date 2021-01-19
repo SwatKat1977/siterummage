@@ -10,7 +10,7 @@ Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
 
-class configurationSchema:
+class ConfigurationSchema:
     ''' Definition of the configuration files JSON Schema'''
     #pylint: disable=too-few-public-methods
 

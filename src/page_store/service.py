@@ -10,7 +10,6 @@ Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
 import os
-from time import sleep
 from common.logger import Logger, LogType
 from common.core_version import CORE_VERSION
 from common.service_base import ServiceBase

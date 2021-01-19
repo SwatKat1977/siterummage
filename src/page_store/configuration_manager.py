@@ -13,7 +13,7 @@ import json
 from typing import Union
 import jsonschema
 from .configuration import Configuration, DatabaseSettings
-from .configuration_schema import configurationSchema as schema
+from .configuration_schema import ConfigurationSchema as schema
 
 class ConfigurationManager:
     """ Class that manages (reads) the main JSON configuration file. """

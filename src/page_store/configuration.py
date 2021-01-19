@@ -15,27 +15,51 @@ class DatabaseSettings:
     #pylint: disable=too-few-public-methods
 
     @property
-    def username(self):
+    def username(self) -> str:
+        """!@brief Database login username (Getter).
+        @param self The object pointer.
+        @returns string.
+        """
         return self._username
 
     @property
-    def database(self):
+    def database(self) -> str:
+        """!@brief Database name (Getter).
+        @param self The object pointer.
+        @returns string.
+        """
         return self._database
 
     @property
-    def host(self):
+    def host(self) -> str:
+        """!@brief Database server host name/ip address (Getter).
+        @param self The object pointer.
+        @returns string.
+        """
         return self._host
 
     @property
-    def port(self):
+    def port(self) -> int:
+        """!@brief Network port MySQL is listening to on server (Getter).
+        @param self The object pointer.
+        @returns int.
+        """
         return self._port
 
     @property
-    def pool_name(self):
+    def pool_name(self) -> str:
+        """!@brief Name or connection pool (Getter).
+        @param self The object pointer.
+        @returns int.
+        """
         return self._pool_name
 
     @property
-    def pool_size(self):
+    def pool_size(self) -> int:
+        """!@brief Size of connection pool (min 1, max 32) (Getter).
+        @param self The object pointer.
+        @returns int.
+        """
         return self._pool_size
 
     def __init__(self, username, database, host, port, pool_name, pool_size):
@@ -48,9 +72,15 @@ class DatabaseSettings:
         self._username = username
 
 class Configuration:
+    """ Overal configuration settings """
+    #pylint: disable=too-few-public-methods
 
     @property
-    def db_settings(self):
+    def db_settings(self) -> DatabaseSettings:
+        """!@brief Database settins (Getter).
+        @param self The object pointer.
+        @returns DatabaseSettings.
+        """
         return self._db_settings
 
     def __init__(self, db_config):
