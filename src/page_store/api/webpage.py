@@ -21,8 +21,10 @@ HEADERKEY_AUTH = 'AuthKey'
 
 class ApiWebpage:
 
-    def __init__(self, interface_instance):
+    def __init__(self, interface_instance, db_interface, configuration):
         self._interface = interface_instance
+        self._db_interface = db_interface
+        self._configuration = configuration
         self._auth_key = 'TesTKeY2021'
 
         # Add route : /webpage/add
@@ -64,6 +66,14 @@ class ApiWebpage:
                 response=err_msg, status=HTTPStatusCode.BadRequest,
                 mimetype='text')
 
+        connection = self._db_interface.get_connection()
+
+        if not connection:
+            return self._interface.response_class(
+                response = 'WIP', status = HTTPStatusCode.RequestTimeout,
+                mimetype = MIMEType.Text)
+
+        self._db_interface.webpage_record_exists(connection, 'http://google.com', '/ping')
 
 
         return self._interface.response_class(

@@ -78,9 +78,46 @@ class DatabaseInterface:
 
         return False
 
-    def add_webpage(self, page_details):
-        pass
+    def get_connection(self):
+        tries = 1
 
+        while tries != 10:
+
+            try:
+                return self._db_adaptor.connect('master_2021')
+
+            except RuntimeError:
+                tries += 1
+
+            sleep(0.1)
+
+        return None
+
+    def webpage_record_exists(self, connection, domain, url_path):
+
+        domain_query = "SELECT id FROM domain WHERE name = %s"
+        query_args = (domain,)
+        results, err_msg = connection.query(domain_query, query_args,
+                                            keep_conn_alive=True)
+        if err_msg:
+            self._logger.log(LogType.Critical,
+                             f"Query '{domain_query}' caused a critical " + \
+                             f"error: {err_msg}")
+            raise RuntimeError('Internal database error')
+
+        if not results:
+            return False
+
+        domain_id = results[0]['id']
+
+        url_query = "SELECT id FROM webpage WHERE name = %s AND domain_id = %s"
+        query_args = (url_path, domain_id)
+        results, err_msg = connection.query(url_query, query_args,
+                                            keep_conn_alive=True)
+
+        return not results
+
+    def add_webpage(self, page_details):
 
         """
         CREATE TABLE domain
