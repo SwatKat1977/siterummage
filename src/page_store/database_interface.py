@@ -93,12 +93,13 @@ class DatabaseInterface:
 
         return None
 
-    def webpage_record_exists(self, connection, domain, url_path):
+    def webpage_record_exists(self, connection, domain, url_path,
+                              keep_alive=False):
 
         domain_query = "SELECT id FROM domain WHERE name = %s"
         query_args = (domain,)
         results, err_msg = connection.query(domain_query, query_args,
-                                            keep_conn_alive=True)
+                                            keep_conn_alive=keep_alive)
         if err_msg:
             self._logger.log(LogType.Critical,
                              f"Query '{domain_query}' caused a critical " + \
@@ -115,7 +116,7 @@ class DatabaseInterface:
         results, err_msg = connection.query(url_query, query_args,
                                             keep_conn_alive=True)
 
-        return not results
+        return results
 
     def add_webpage(self, page_details):
 

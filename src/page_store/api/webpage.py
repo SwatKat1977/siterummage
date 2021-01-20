@@ -15,7 +15,7 @@ from quart import request
 from common.http_status_code import HTTPStatusCode
 from common.logger import LogType
 from common.mime_type import MIMEType
-import common.api_contracts.page_store as contracts
+from common.api_contracts.page_store import WebpageAdd
 
 HEADERKEY_AUTH = 'AuthKey'
 
@@ -58,7 +58,7 @@ class ApiWebpage:
         # If the message isn't valid then a 400 error should be generated.
         try:
             jsonschema.validate(instance=body,
-                                schema=contracts.WebpageAdd.Schema)
+                                schema=WebpageAdd.Schema)
 
         except jsonschema.exceptions.ValidationError:
             err_msg = 'Message body validation failed.'
@@ -70,15 +70,29 @@ class ApiWebpage:
 
         if not connection:
             return self._interface.response_class(
-                response = 'WIP', status = HTTPStatusCode.RequestTimeout,
-                mimetype = MIMEType.Text)
+                response='System busy',status=HTTPStatusCode.RequestTimeout,
+                mimetype=MIMEType.Text)
 
-        self._db_interface.webpage_record_exists(connection, 'http://google.com', '/ping')
+        general_settings = body[WebpageAdd.Elements.toplevel_general]
+        domain = general_settings[WebpageAdd.Elements.general_domain]
+        url_path = general_settings[WebpageAdd.Elements.general_url_path]
+
+        if self._db_interface.webpage_record_exists(connection, domain,
+                                                    url_path, keep_alive=True):
+            connection.close()
+            return self._interface.response_class(
+                response='Website and url already exists',
+                status=HTTPStatusCode.NotAcceptable,
+                mimetype=MIMEType.Text)
+
+
 
 
         return self._interface.response_class(
             response = 'WIP', status = HTTPStatusCode.OK,
             mimetype = MIMEType.Text)
+
+
 
     async def _get_webpage(self):
 
