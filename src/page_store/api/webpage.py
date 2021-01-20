@@ -10,10 +10,12 @@ Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
 import json
+import jsonschema
 from quart import request
 from common.http_status_code import HTTPStatusCode
 from common.logger import LogType
 from common.mime_type import MIMEType
+import common.api_contracts.page_store as contracts
 
 HEADERKEY_AUTH = 'AuthKey'
 
@@ -39,6 +41,30 @@ class ApiWebpage:
             return self._interface.response_class(
                 response = 'Invalid authentication key',
                 status = validate_return, mimetype = MIMEType.Text)
+
+        # Check for that the message body is of type application/json and that
+        # there is one, if not report a 400 error status with a human-readable.
+        body = await request.get_json()
+        if not body:
+            err_msg = 'Missing/invalid json body'
+            response = self._interface.response_class(
+                response=err_msg, status=HTTPStatusCode.BadRequest,
+                mimetype=MIMEType.Text)
+            return response
+
+        # Validate that the json body conforms to the expected schema.
+        # If the message isn't valid then a 400 error should be generated.
+        try:
+            jsonschema.validate(instance=body,
+                                schema=contracts.WebpageAdd.Schema)
+
+        except jsonschema.exceptions.ValidationError:
+            err_msg = 'Message body validation failed.'
+            return self._interface.response_class(
+                response=err_msg, status=HTTPStatusCode.BadRequest,
+                mimetype='text')
+
+
 
         return self._interface.response_class(
             response = 'WIP', status = HTTPStatusCode.OK,

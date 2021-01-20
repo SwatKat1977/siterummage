@@ -15,7 +15,7 @@ from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 
 class DatabaseInterface:
     """ Database functionalty abstraction class """
-    #pylint: disable=too-few-public-methods
+    #_pylint: disable=too-few-public-methods
     __slots__ = ['_db_adaptor', '_config', '_logger']
 
     def __init__(self, logger, configuration):
@@ -77,3 +77,41 @@ class DatabaseInterface:
                 sleep(5)
 
         return False
+
+    def add_webpage(self, page_details):
+        pass
+
+
+        """
+        CREATE TABLE domain
+        (
+            id BIGINT AUTO_INCREMENT,
+            name VARCHAR(300),
+
+            PRIMARY KEY(id)
+        ) DEFAULT CHARACTER SET utf8;
+
+        CREATE TABLE webpage
+        (
+            id BIGINT AUTO_INCREMENT,
+            name VARCHAR(5000),
+            domain_id BIGINT,
+            last_scanned DATETIME,
+            read_successfully BOOLEAN,
+
+            PRIMARY KEY(id),
+            FOREIGN KEY(domain_id) REFERENCES domain(id)
+        ) DEFAULT CHARACTER SET utf8;
+
+        CREATE TABLE webpage_metadata
+        (
+            id BIGINT AUTO_INCREMENT,
+            webpage_id BIGINT,
+            title VARCHAR(4096),
+            abstract VARCHAR(4096),
+
+            PRIMARY KEY(id),
+            FOREIGN KEY(webpage_id) REFERENCES webpage(id)
+        ) DEFAULT CHARACTER SET utf8;
+
+        """

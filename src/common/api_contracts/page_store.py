@@ -33,7 +33,7 @@ class WebpageAdd:
         metadata_title = 'title'
         metadata_abstract = 'abstract'
 
-    json_schema = \
+    Schema = \
     {
         "$schema": "http://json-schema.org/draft-07/schema#",
 
@@ -57,7 +57,7 @@ class WebpageAdd:
                     },
                     'successfully read':
                     {
-                        "type" : "bool"
+                        "type" : "boolean"
                     }
                 },
                 "required" : ['domain', 'url path', 'successfully read']
