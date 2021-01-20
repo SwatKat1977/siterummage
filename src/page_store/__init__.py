@@ -58,7 +58,3 @@ if not service.initialise():
 # foo = mysql_adaptor.connect('master_2021')
 # print('2nd conn', foo)
 # query = "INSERT INTO domain(id, name) VALUES(0, 'https://www.test.com')"
-
-# print(foo.query(query, commit=True))
-# foo = mysql_adaptor.connect('master_2021')
-# print(foo.query('SELECT * FROM domain'))

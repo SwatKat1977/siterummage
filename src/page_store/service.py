@@ -47,7 +47,7 @@ class Service(ServiceBase):
         self._db_interface = None
 
         self._api_health = ApiHealth(self._quart)
-        self._api_links = ApiWebpage(self._quart)
+        self._api_webpage = None
 
     def _initialise(self) -> bool:
         self._logger.write_to_console = True
@@ -84,6 +84,9 @@ class Service(ServiceBase):
 
         if not self._db_interface.database_connection_valid():
             return False
+
+        self._api_webpage = ApiWebpage(self._quart, self._db_interface,
+                                       self._configuration)
 
         self._is_initialised = True
 
