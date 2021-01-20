@@ -87,6 +87,7 @@ class ApiWebpage:
 
 
 
+        await self._db_interface.add_webpage(connection, body)
 
         return self._interface.response_class(
             response = 'WIP', status = HTTPStatusCode.OK,

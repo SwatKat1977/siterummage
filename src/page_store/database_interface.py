@@ -10,6 +10,7 @@ Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
 from time import sleep
+from common.api_contracts.page_store import WebpageAdd
 from common.logger import LogType
 from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 
@@ -17,6 +18,8 @@ class DatabaseInterface:
     """ Database functionalty abstraction class """
     #_pylint: disable=too-few-public-methods
     __slots__ = ['_db_adaptor', '_config', '_logger']
+
+    domain_table_lock = 'domain_lock'
 
     def __init__(self, logger, configuration):
         """!@brief DatabaseInterface class constructor
@@ -118,38 +121,99 @@ class DatabaseInterface:
 
         return results
 
-    def add_webpage(self, page_details):
+    def get_table_lock(self, connection, lock_name):
+        query = "SELECT GET_LOCK(%s,10) as 'lock'"
+        query_args = (lock_name,)
+        results, _ = connection.query(query, query_args,
+                                      keep_conn_alive=True)
+        return results[0]['lock'] == 1
 
-        """
-        CREATE TABLE domain
-        (
-            id BIGINT AUTO_INCREMENT,
-            name VARCHAR(300),
+    def release_table_lock(self, connection, lock_name):
+        query = "SELECT RELEASE_LOCK(%s) as 'lock'"
+        query_args = (lock_name,)
+        results, _ = connection.query(query, query_args,
+                                      keep_conn_alive=True)
+        return results[0]['lock'] == 1
 
-            PRIMARY KEY(id)
-        ) DEFAULT CHARACTER SET utf8;
+    async def add_webpage(self, connection, page_details):
 
-        CREATE TABLE webpage
-        (
-            id BIGINT AUTO_INCREMENT,
-            name VARCHAR(5000),
-            domain_id BIGINT,
-            last_scanned DATETIME,
-            read_successfully BOOLEAN,
+        # Extract general properties from page details.
+        general = page_details[WebpageAdd.Elements.toplevel_general]
+        domain = general[WebpageAdd.Elements.general_domain]
+        url_path = general[WebpageAdd.Elements.general_url_path]
+        read_successful = general[WebpageAdd.Elements.general_read_successful]
 
-            PRIMARY KEY(id),
-            FOREIGN KEY(domain_id) REFERENCES domain(id)
-        ) DEFAULT CHARACTER SET utf8;
+        domain_id = None
 
-        CREATE TABLE webpage_metadata
-        (
-            id BIGINT AUTO_INCREMENT,
-            webpage_id BIGINT,
-            title VARCHAR(4096),
-            abstract VARCHAR(4096),
+        # Check to see if the domain exists, if it doesn't then add it.
+        ###########
+        domain_query = "SELECT id FROM domain WHERE name = %s"
+        query_args = (domain,)
+        domain_select_result, err_msg = connection.query(domain_query,
+                                                         query_args,
+                                                         keep_conn_alive=True)
+        if err_msg:
+            self._logger.log(LogType.Critical,
+                             f"Query '{domain_query}' caused a critical " + \
+                             f"error: {err_msg}")
+            raise RuntimeError('Internal database error')
 
-            PRIMARY KEY(id),
-            FOREIGN KEY(webpage_id) REFERENCES webpage(id)
-        ) DEFAULT CHARACTER SET utf8;
+        if not domain_select_result:
+            if not self.get_table_lock(connection, self.domain_table_lock):
+                raise RuntimeError('Domain table lock timeout')
 
-        """
+            query = "INSERT INTO domain VALUES(0, %s)"
+            query_args = (domain,)
+            results, err_msg = connection.query(query, query_args, commit=True,
+                                                keep_conn_alive=True)
+            if err_msg:
+                self.release_table_lock(connection, self.domain_table_lock)
+                self._logger.log(LogType.Critical,
+                                f"Query '{query}' caused a critical " + \
+                                f"error: {err_msg}")
+                raise RuntimeError('Internal database error')
+
+            results, err_msg = connection.query('SELECT LAST_INSERT_ID() as last_id',
+                                                keep_conn_alive=True)
+            print(results)
+            self.release_table_lock(connection, self.domain_table_lock)
+            domain_id = results[0]['last_id']
+
+        else:
+            domain_id = domain_select_result[0]['id']
+
+        # Add core webpage entry
+        ###########
+        query = "INSERT INTO webpage VALUES(0, %s, %s, NOW(), %s)"
+        query_args = (url_path, domain_id, read_successful)
+        results, err_msg = connection.query(query, query_args, commit=True,
+                                            keep_conn_alive=True)
+        if err_msg:
+            self.release_table_lock(connection, self.domain_table_lock)
+            self._logger.log(LogType.Critical,
+                            f"Query '{query}' caused a critical " + \
+                            f"error: {err_msg}")
+            raise RuntimeError('Internal database error')
+
+        results, _ = connection.query('SELECT LAST_INSERT_ID() as last_id',
+                                        keep_conn_alive=True)
+        webpage_id = results[0]['last_id']
+
+        # Add webpage metadata entry
+        ###########
+        metadata = page_details[WebpageAdd.Elements.toplevel_metadata]
+        title = metadata[WebpageAdd.Elements.metadata_title]
+        abstract = metadata[WebpageAdd.Elements.metadata_abstract]
+
+        query = "INSERT INTO webpage_metadata VALUES(0, %s, %s, %s)"
+        query_args = (webpage_id, title, abstract)
+        results, err_msg = connection.query(query, query_args, commit=True,
+                                            keep_conn_alive=True)
+        if err_msg:
+            self._logger.log(LogType.Critical,
+                            f"Query '{query}' caused a critical " + \
+                            f"error: {err_msg}")
+            raise RuntimeError('Internal database error')
+
+        results, _ = connection.query('SELECT LAST_INSERT_ID() as last_id',
+                                        keep_conn_alive=True)
