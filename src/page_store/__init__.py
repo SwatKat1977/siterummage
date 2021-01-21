@@ -50,11 +50,5 @@ if not os.getenv('SITERUMMAGE_PAGESTORE_CONFIG'):
 if not service.initialise():
     sys.exit()
 
-# mysql_adaptor = MySQLAdaptor('root', 'siterummage', '127.0.0.1', 4000, pool_size=1)
-
 # foo = mysql_adaptor.connect('master_2021')
 # print(foo.call_stored_procedure('g'))
-
-# foo = mysql_adaptor.connect('master_2021')
-# print('2nd conn', foo)
-# query = "INSERT INTO domain(id, name) VALUES(0, 'https://www.test.com')"
