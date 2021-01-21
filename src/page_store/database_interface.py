@@ -112,27 +112,18 @@ class DatabaseInterface:
         @returns True = exists, False = doesn't exist.
         """
 
-        domain_query = "SELECT id FROM domain WHERE name = %s"
-        query_args = (domain,)
-        results, err_msg = connection.query(domain_query, query_args,
-                                            keep_conn_alive=keep_alive)
+        query = "SELECT id FROM webpage WHERE url_path = %s AND domain = %s"
+        query_args = (url_path, domain)
+        results, err_msg = connection.query(query, query_args,
+                                            keep_conn_alive=True)
+
         if err_msg:
             self._logger.log(LogType.Critical,
-                             f"Query '{domain_query}' caused a critical " + \
+                             f"Query '{query}' caused a critical " + \
                              f"error: {err_msg}")
             raise RuntimeError('Internal database error')
 
-        if not results:
-            return False
-
-        domain_id = results[0]['id']
-
-        url_query = "SELECT id FROM webpage WHERE name = %s AND domain_id = %s"
-        query_args = (url_path, domain_id)
-        results, err_msg = connection.query(url_query, query_args,
-                                            keep_conn_alive=True)
-
-        return results
+        return False if not results else True
 
     def get_table_lock(self, connection, lock_name) -> bool:
         """!@brief Attempt to get a lock for write using lock_name as the lock
@@ -181,49 +172,11 @@ class DatabaseInterface:
         url_path = general[WebpageAdd.Elements.general_url_path]
         read_successful = general[WebpageAdd.Elements.general_read_successful]
 
-        domain_id = None
-
-        # Check to see if the domain exists, if it doesn't then add it.
-        ###########
-        domain_query = "SELECT id FROM domain WHERE name = %s"
-        query_args = (domain,)
-        domain_select_result, err_msg = connection.query(domain_query,
-                                                         query_args,
-                                                         keep_conn_alive=True)
-        if err_msg:
-            self._logger.log(LogType.Critical,
-                             f"Query '{domain_query}' caused a critical " + \
-                             f"error: {err_msg}")
-            raise RuntimeError('Internal database error')
-
-        if not domain_select_result:
-            if not self.get_table_lock(connection, self.domain_table_lock):
-                raise RuntimeError('Domain table lock timeout')
-
-            query = "INSERT INTO domain VALUES(0, %s)"
-            query_args = (domain,)
-            results, err_msg = connection.query(query, query_args, commit=True,
-                                                keep_conn_alive=True)
-            if err_msg:
-                self.release_table_lock(connection, self.domain_table_lock)
-                self._logger.log(LogType.Critical,
-                                f"Query '{query}' caused a critical " + \
-                                f"error: {err_msg}")
-                raise RuntimeError('Internal database error')
-
-            results, err_msg = connection.query('SELECT LAST_INSERT_ID() as last_id',
-                                                keep_conn_alive=True)
-            print(results)
-            self.release_table_lock(connection, self.domain_table_lock)
-            domain_id = results[0]['last_id']
-
-        else:
-            domain_id = domain_select_result[0]['id']
-
         # Add core webpage entry
         ###########
-        query = "INSERT INTO webpage VALUES(0, %s, %s, NOW(), %s)"
-        query_args = (url_path, domain_id, read_successful)
+        query = "INSERT INTO webpage(domain, url_path, read_successful) " + \
+            "VALUES(%s, %s, %s)"
+        query_args = (domain, url_path, read_successful)
         results, err_msg = connection.query(query, query_args, commit=True,
                                             keep_conn_alive=True)
         if err_msg:
@@ -243,7 +196,8 @@ class DatabaseInterface:
         title = metadata[WebpageAdd.Elements.metadata_title]
         abstract = metadata[WebpageAdd.Elements.metadata_abstract]
 
-        query = "INSERT INTO webpage_metadata VALUES(0, %s, %s, %s)"
+        query = "INSERT INTO webpage_metadata(webpage_id, title, abstract)" + \
+            " VALUES(%s, %s, %s)"
         query_args = (webpage_id, title, abstract)
         results, err_msg = connection.query(query, query_args, commit=True,
                                             keep_conn_alive=True)

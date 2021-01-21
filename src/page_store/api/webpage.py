@@ -81,8 +81,16 @@ class ApiWebpage:
         domain = general_settings[WebpageAdd.Elements.general_domain]
         url_path = general_settings[WebpageAdd.Elements.general_url_path]
 
-        if self._db_interface.webpage_record_exists(connection, domain,
-                                                    url_path, keep_alive=True):
+        try:
+            record_exists = self._db_interface.webpage_record_exists(
+                connection, domain, url_path, keep_alive=True)
+
+        except RuntimeError as ex:
+            return self._interface.response_class(
+                response = str(ex), status = HTTPStatusCode.NotAcceptable,
+                mimetype = MIMEType.Text)
+                         
+        if record_exists:
             connection.close()
             return self._interface.response_class(
                 response='Website and url already exists',
@@ -93,9 +101,9 @@ class ApiWebpage:
             await self._db_interface.add_webpage(connection, body)
 
         except RuntimeError as ex:
-            connection.close()
+            #connection.close()
             return self._interface.response_class(
-                response = ex, status = HTTPStatusCode.OK,
+                response = str(ex), status = HTTPStatusCode.NotAcceptable,
                 mimetype = MIMEType.Text)
 
         connection.close()
@@ -146,7 +154,7 @@ class ApiWebpage:
                 response='System busy',status=HTTPStatusCode.RequestTimeout,
                 mimetype=MIMEType.Text)
 
-        self._db_interface.get_webpage(connection, body)
+        await self._db_interface.get_webpage(connection, body)
 
         return self._interface.response_class(
             response='Work in progress',status=HTTPStatusCode.ServiceUnavailables,
