@@ -115,3 +115,49 @@ class WebpageDetails:
         },
         "required" : ['domain', 'url path']
     }
+
+
+
+
+
+class WebpageDetailsResponse:
+    ''' Definition of the webpage/details response JSON schema'''
+    #pylint: disable=too-few-public-methods
+
+    class Elements:
+        ''' Definition of the JSON elements'''
+        #pylint: disable=too-few-public-methods
+
+        read_successful = 'read successful'
+        title = 'title'
+        abstract = 'abstract'
+        last_scanned = 'last scanned'
+
+    Schema = \
+    {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+
+        "type" : "object",
+        "additionalProperties" : False,
+
+        "properties":
+        {
+            'title':
+            {
+                "type" : "string"
+            },
+            'abstract':
+            {
+                "type" : "string"
+            },
+            'read successful':
+            {
+                "type" : "boolean"
+            },
+            'last scanned':
+            {
+                "type" : "boolean"
+            }
+        },
+        "required" : ['title', 'abstract', 'read successful', 'last scanned']
+    }

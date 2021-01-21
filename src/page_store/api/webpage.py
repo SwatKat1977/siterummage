@@ -154,11 +154,12 @@ class ApiWebpage:
                 response='System busy',status=HTTPStatusCode.RequestTimeout,
                 mimetype=MIMEType.Text)
 
-        await self._db_interface.get_webpage(connection, body)
+        response = await self._db_interface.get_webpage(connection, body)
+        connection.close()
 
         return self._interface.response_class(
-            response='Work in progress',status=HTTPStatusCode.ServiceUnavailables,
-            mimetype=MIMEType.Text)
+            response=json.dumps(response),status=HTTPStatusCode.OK,
+            mimetype=MIMEType.JSON)
 
     def _validate_auth_key(self):
         """!@brief Validate the authentication key for a request.

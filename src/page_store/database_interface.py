@@ -10,7 +10,8 @@ Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
 from time import sleep
-from common.api_contracts.page_store import WebpageAdd
+from common.api_contracts.page_store import WebpageAdd, WebpageDetails, \
+                                            WebpageDetailsResponse
 from common.logger import LogType
 from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 
@@ -218,3 +219,36 @@ class DatabaseInterface:
         @param page_details Dictionary containing page details.
         @returns None.
         """
+
+        domain = page_details[WebpageDetails.Elements.domain]
+        url_path = page_details[WebpageDetails.Elements.url_path]
+
+        query = "SELECT wp.last_scanned, wp.read_successful, md.title, " + \
+                "md.abstract " + \
+                "FROM webpage as wp LEFT JOIN webpage_metadata as md " + \
+                "ON wp.id = md.webpage_id WHERE wp.domain = %s AND wp.url_path = %s"
+        query_args = (domain, url_path)
+        results, err_msg = connection.query(query, query_args,
+                                            keep_conn_alive=True)
+        if err_msg:
+            self._logger.log(LogType.Critical,
+                            f"Query '{query}' caused a critical " + \
+                            f"error: {err_msg}")
+            raise RuntimeError('Internal database error')
+
+        if not results:
+            return {}
+
+        title = '' if not results[0]['title'] else results[0]['title']
+        abstract = '' if not results[0]['abstract'] else results[0]['abstract']
+        read_success = 'true' if results[0]['read_successful'] else 'false'
+        last_scanned = results[0]['last_scanned'].strftime("%Y-%m-%d %H:%M:%S")
+
+        response = {
+            WebpageDetailsResponse.Elements.title: title,
+            WebpageDetailsResponse.Elements.abstract: abstract,
+            WebpageDetailsResponse.Elements.read_successful: read_success,
+            WebpageDetailsResponse.Elements.last_scanned: last_scanned
+        }
+
+        return response
