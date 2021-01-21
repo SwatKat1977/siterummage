@@ -16,7 +16,6 @@ from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 
 class DatabaseInterface:
     """ Database functionalty abstraction class """
-    #_pylint: disable=too-few-public-methods
     __slots__ = ['_db_adaptor', '_config', '_logger']
 
     domain_table_lock = 'domain_lock'
@@ -256,3 +255,6 @@ class DatabaseInterface:
 
         results, _ = connection.query('SELECT LAST_INSERT_ID() as last_id',
                                         keep_conn_alive=True)
+
+    async def get_webpage(self, connection, page_details) -> object:
+        pass

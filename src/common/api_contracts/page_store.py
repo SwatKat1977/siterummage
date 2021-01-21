@@ -81,3 +81,37 @@ class WebpageAdd:
         },
         "required" : ['general settings', 'metadata']
     }
+
+class WebpageDetails:
+    ''' Definition of the webpage/details JSON schema'''
+    #pylint: disable=too-few-public-methods
+
+    class Elements:
+        ''' Definition of the JSON elements'''
+        #pylint: disable=too-few-public-methods
+
+        # -- General Settings sub-elements --
+        # -----------------------------------
+        domain = 'domain'
+        url_path = 'url path'
+
+    Schema = \
+    {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+
+        "type" : "object",
+        "additionalProperties" : False,
+
+        "properties":
+        {
+            'domain':
+            {
+                "type" : "string"
+            },
+            'url path':
+            {
+                "type" : "string"
+            }
+        },
+        "required" : ['domain', 'url path']
+    }
