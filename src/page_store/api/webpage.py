@@ -15,7 +15,7 @@ from quart import request
 from common.http_status_code import HTTPStatusCode
 from common.logger import LogType
 from common.mime_type import MIMEType
-from common.api_contracts.page_store import WebpageAdd
+from common.api_contracts.page_store import WebpageAdd, WebpageDetails
 
 HEADERKEY_AUTH = 'AuthKey'
 
@@ -35,7 +35,11 @@ class ApiWebpage:
         self._interface.add_url_rule('/webpage/details',
             methods = ['GET'], view_func = self._get_webpage)
 
-    async def _add_webpage(self):
+    async def _add_webpage(self) -> None:
+        """!@brief Implementation of the /webpage/add endpoint.
+        @param self The object pointer.
+        @returns None.
+        """
 
         # Validate the request to ensure the auth key is present and valid.
         validate_return = self._validate_auth_key()
@@ -101,6 +105,10 @@ class ApiWebpage:
             mimetype = MIMEType.Text)
 
     async def _get_webpage(self):
+        """!@brief Implementation of the /webpage/details endpoint.
+        @param self The object pointer.
+        @returns None.
+        """
 
         # Validate the request to ensure the auth key is present and valid.
         validate_return = self._validate_auth_key()
@@ -109,9 +117,40 @@ class ApiWebpage:
                 response = 'Invalid authentication key',
                 status = validate_return, mimetype = MIMEType.Text)
 
+        # Check for that the message body is of type application/json and that
+        # there is one, if not report a 400 error status with a human-readable.
+        body = await request.get_json()
+        if not body:
+            err_msg = 'Missing/invalid json body'
+            response = self._interface.response_class(
+                response=err_msg, status=HTTPStatusCode.BadRequest,
+                mimetype=MIMEType.Text)
+            return response
+
+        # Validate that the json body conforms to the expected schema.
+        # If the message isn't valid then a 400 error should be generated.
+        try:
+            jsonschema.validate(instance=body,
+                                schema=WebpageDetails.Schema)
+
+        except jsonschema.exceptions.ValidationError:
+            err_msg = 'Message body validation failed.'
+            return self._interface.response_class(
+                response=err_msg, status=HTTPStatusCode.BadRequest,
+                mimetype='text')
+
+        connection = self._db_interface.get_connection()
+
+        if not connection:
+            return self._interface.response_class(
+                response='System busy',status=HTTPStatusCode.RequestTimeout,
+                mimetype=MIMEType.Text)
+
+        self._db_interface.get_webpage(connection, body)
+
         return self._interface.response_class(
-            response = 'WIP', status = HTTPStatusCode.OK,
-            mimetype = MIMEType.Text)
+            response='Work in progress',status=HTTPStatusCode.ServiceUnavailables,
+            mimetype=MIMEType.Text)
 
     def _validate_auth_key(self):
         """!@brief Validate the authentication key for a request.
