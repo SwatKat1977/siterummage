@@ -143,6 +143,8 @@ class DatabaseInterface:
         @param lock_name Unique name of the lock.
         @returns True = lock retrieved, False = lock retrieval failed.
         """
+        #_pylint: disable=no-self-use
+
         query = "SELECT GET_LOCK(%s,10) as 'lock'"
         query_args = (lock_name,)
         results, _ = connection.query(query, query_args,
@@ -156,6 +158,8 @@ class DatabaseInterface:
         @param lock_name Unique name of the lock.
         @returns True = lock released, False = lock not released.
         """
+        #_pylint: disable=no-self-use
+
         query = "SELECT RELEASE_LOCK(%s) as 'lock'"
         query_args = (lock_name,)
         results, _ = connection.query(query, query_args,
@@ -170,6 +174,7 @@ class DatabaseInterface:
         @param page_details Dictionary containing page details.
         @returns None.
         """
+        #_pylint: disable=too-many-locals
 
         # Extract general properties from page details.
         general = page_details[WebpageAdd.Elements.toplevel_general]
