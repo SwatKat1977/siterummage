@@ -82,6 +82,11 @@ class DatabaseInterface:
         return False
 
     def get_connection(self):
+        """!@brief Get a database connection, retrying on error.
+        @param self The object pointer.
+        @returns MySQLConnection if a valid connection else it returns None.
+        """
+
         tries = 1
 
         while tries != 10:
@@ -98,6 +103,15 @@ class DatabaseInterface:
 
     def webpage_record_exists(self, connection, domain, url_path,
                               keep_alive=False):
+        """!@brief Check to see if a webpage record exists, it is only basic
+                   data.
+        @param self The object pointer.
+        @param connection Database connection.
+        @param domain Base domain (e.g. http://www.google.com)
+        @param url_path Url after domain (e.g. /index.html)
+        @param keep_alive Should connection be kept alive (default is False).
+        @returns True = exists, False = doesn't exist.
+        """
 
         domain_query = "SELECT id FROM domain WHERE name = %s"
         query_args = (domain,)
@@ -121,21 +135,41 @@ class DatabaseInterface:
 
         return results
 
-    def get_table_lock(self, connection, lock_name):
+    def get_table_lock(self, connection, lock_name) -> bool:
+        """!@brief Attempt to get a lock for write using lock_name as the lock
+                   identifier.
+        @param self The object pointer.
+        @param connection Database connection.
+        @param lock_name Unique name of the lock.
+        @returns True = lock retrieved, False = lock retrieval failed.
+        """
         query = "SELECT GET_LOCK(%s,10) as 'lock'"
         query_args = (lock_name,)
         results, _ = connection.query(query, query_args,
                                       keep_conn_alive=True)
         return results[0]['lock'] == 1
 
-    def release_table_lock(self, connection, lock_name):
+    def release_table_lock(self, connection, lock_name) -> bool:
+        """!@brief Release a lock using lock_name as the lock identifier.
+        @param self The object pointer.
+        @param connection Database connection.
+        @param lock_name Unique name of the lock.
+        @returns True = lock released, False = lock not released.
+        """
         query = "SELECT RELEASE_LOCK(%s) as 'lock'"
         query_args = (lock_name,)
         results, _ = connection.query(query, query_args,
                                       keep_conn_alive=True)
         return results[0]['lock'] == 1
 
-    async def add_webpage(self, connection, page_details):
+    async def add_webpage(self, connection, page_details) -> None:
+        """!@brief Add webpage entries for the domain (when it does not exist),
+                   webpage and its metadata.
+        @param self The object pointer.
+        @param connection Database connection.
+        @param page_details Dictionary containing page details.
+        @returns None.
+        """
 
         # Extract general properties from page details.
         general = page_details[WebpageAdd.Elements.toplevel_general]
