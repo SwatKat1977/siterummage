@@ -85,15 +85,20 @@ class ApiWebpage:
                 status=HTTPStatusCode.NotAcceptable,
                 mimetype=MIMEType.Text)
 
+        try:
+            await self._db_interface.add_webpage(connection, body)
 
+        except RuntimeError as ex:
+            connection.close()
+            return self._interface.response_class(
+                response = ex, status = HTTPStatusCode.OK,
+                mimetype = MIMEType.Text)
 
-        await self._db_interface.add_webpage(connection, body)
+        connection.close()
 
         return self._interface.response_class(
-            response = 'WIP', status = HTTPStatusCode.OK,
+            response = 'Success', status = HTTPStatusCode.OK,
             mimetype = MIMEType.Text)
-
-
 
     async def _get_webpage(self):
 
