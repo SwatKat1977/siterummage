@@ -1,0 +1,140 @@
+{
+	"info": {
+		"_postman_id": "53a438db-b20c-496a-8d05-6d2ba0ebe938",
+		"name": "Site Rummage",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Page Store",
+			"item": [
+				{
+					"name": "Add Webpage",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AuthKey",
+								"type": "text",
+								"value": "TesTKeY2021"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"general settings\":\n    {\n        \"domain\": \"https://google.com\",\n        \"url path\": \"/foo\",\n        \"successfully read\": false\n    },\n    \"metadata\":\n    {\n        \"title\": \"strinhg\",\n        \"abstract\": \"Noooo\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:2020/webpage/add",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "2020",
+							"path": [
+								"webpage",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Webpage",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "AuthKey",
+								"type": "text",
+								"value": "TesTKeY2021"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"domain\": \"https://google.com\",\n    \"url path\": \"/foo\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:2020/webpage/details",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "2020",
+							"path": [
+								"webpage",
+								"details"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Health Ping",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "AuthKey",
+								"type": "text",
+								"value": "TesTKeY2021"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:2020/health/ping",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "2020",
+							"path": [
+								"health",
+								"ping"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Health Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "AuthKey",
+								"type": "text",
+								"value": "TesTKeY2021"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:2020/health/status",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "2020",
+							"path": [
+								"health",
+								"status"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Page Store"
+		}
+	]
+}

@@ -1,0 +1,14 @@
+FROM python:3-alpine
+
+RUN pip install --upgrade pip
+
+# Install app dependencies of flask and waitress.
+RUN pip install hypercorn
+RUN pip install mysql-connector
+RUN pip install quart
+
+COPY src/common /app/common
+COPY src/page_store /app/page_store
+WORKDIR /app
+
+CMD ["hypercorn", "page_store:app", "--bind", "'0.0.0.0:2020'"]
