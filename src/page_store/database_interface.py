@@ -115,7 +115,7 @@ class DatabaseInterface:
         query = "SELECT id FROM webpage WHERE url_path = %s AND domain = %s"
         query_args = (url_path, domain)
         results, err_msg = connection.query(query, query_args,
-                                            keep_conn_alive=True)
+                                            keep_conn_alive=keep_alive)
 
         if err_msg:
             self._logger.log(LogType.Critical,
@@ -123,7 +123,7 @@ class DatabaseInterface:
                              f"error: {err_msg}")
             raise RuntimeError('Internal database error')
 
-        return False if not results else True
+        return len(results)
 
     def get_table_lock(self, connection, lock_name) -> bool:
         """!@brief Attempt to get a lock for write using lock_name as the lock
@@ -211,4 +211,10 @@ class DatabaseInterface:
                                         keep_conn_alive=True)
 
     async def get_webpage(self, connection, page_details) -> object:
-        pass
+        """!@brief Get a webpages details (if it exists), if it doesn't then
+                   return an emptry dictionary.
+        @param self The object pointer.
+        @param connection Database connection.
+        @param page_details Dictionary containing page details.
+        @returns None.
+        """
