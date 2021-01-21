@@ -27,6 +27,12 @@ class HTTPStatusCode:
     # 202 - Accepted
     Accepted = 202
 
+    # 203 - Non-Authoritative Information
+    NonAuthoritativeInformation = 203
+
+    # 204 - No Content
+    NoContent = 204
+
     ###################
     # 4xx client errors
     ###################
@@ -51,6 +57,12 @@ class HTTPStatusCode:
 
     # 415 − Unsupported Media Type
     UnsupportedMediaType = 415
+
+    # 417 - Expectation Failed
+    ExpectationFailed = 417
+
+    # 423 - Locked
+    Locked = 423
 
     # 429 − Too Many Requests
     TooManyRequests = 429
