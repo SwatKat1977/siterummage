@@ -8,7 +8,7 @@ CREATE TABLE webpage
     url_path VARCHAR(5000) NOT NULL,
     last_scanned TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     read_successful BOOLEAN NOT NULL,
-
+    page_hash VARCHAR(32) NOT NULL,
     PRIMARY KEY(id)
 ) DEFAULT CHARACTER SET utf8;
 

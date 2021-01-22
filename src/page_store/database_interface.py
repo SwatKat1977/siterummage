@@ -172,16 +172,16 @@ class DatabaseInterface:
         domain = general[WebpageAdd.Elements.general_domain]
         url_path = general[WebpageAdd.Elements.general_url_path]
         read_successful = general[WebpageAdd.Elements.general_read_successful]
+        page_hash = general[WebpageAdd.Elements.general_hash]
 
         # Add core webpage entry
         ###########
-        query = "INSERT INTO webpage(domain, url_path, read_successful) " + \
-            "VALUES(%s, %s, %s)"
-        query_args = (domain, url_path, read_successful)
+        query = "INSERT INTO webpage(domain, url_path, read_successful, " + \
+            "page_hash) VALUES(%s, %s, %s, %s)"
+        query_args = (domain, url_path, read_successful, page_hash)
         results, err_msg = connection.query(query, query_args, commit=True,
                                             keep_conn_alive=True)
         if err_msg:
-            self.release_table_lock(connection, self.domain_table_lock)
             self._logger.log(LogType.Critical,
                             f"Query '{query}' caused a critical " + \
                             f"error: {err_msg}")
@@ -223,8 +223,8 @@ class DatabaseInterface:
         domain = page_details[WebpageDetails.Elements.domain]
         url_path = page_details[WebpageDetails.Elements.url_path]
 
-        query = "SELECT wp.last_scanned, wp.read_successful, md.title, " + \
-                "md.abstract " + \
+        query = "SELECT wp.last_scanned, wp.read_successful, " + \
+                "wp.page_hash, md.title, md.abstract " + \
                 "FROM webpage as wp LEFT JOIN webpage_metadata as md " + \
                 "ON wp.id = md.webpage_id WHERE wp.domain = %s AND wp.url_path = %s"
         query_args = (domain, url_path)
@@ -243,12 +243,14 @@ class DatabaseInterface:
         abstract = '' if not results[0]['abstract'] else results[0]['abstract']
         read_success = 'true' if results[0]['read_successful'] else 'false'
         last_scanned = results[0]['last_scanned'].strftime("%Y-%m-%d %H:%M:%S")
+        page_hash = results[0]['page_hash']
 
         response = {
             WebpageDetailsResponse.Elements.title: title,
             WebpageDetailsResponse.Elements.abstract: abstract,
             WebpageDetailsResponse.Elements.read_successful: read_success,
-            WebpageDetailsResponse.Elements.last_scanned: last_scanned
+            WebpageDetailsResponse.Elements.last_scanned: last_scanned,
+            WebpageDetailsResponse.Elements.page_hash: page_hash
         }
 
         return response

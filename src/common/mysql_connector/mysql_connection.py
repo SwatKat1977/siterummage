@@ -89,7 +89,6 @@ class MySQLConnection:
         @param keep_conn_alive Optional flag if to keep conneciton alive
         @returns Tuple (results, error_message)
         """
-
         cursor = self._connection.cursor()
 
         try:
@@ -108,6 +107,10 @@ class MySQLConnection:
         except mysql.connector.errors.ProgrammingError as mysql_exception:
             self._close(cursor)
             return (None, mysql_exception.msg)
+
+        except mysql.connector.errors.DatabaseError as mysql_except:
+            self._close(cursor)
+            return (None, mysql_except.msg)
 
         try:
             # Fetch all of the results rows returned from MySQL.

@@ -27,6 +27,7 @@ class WebpageAdd:
         general_domain = 'domain'
         general_url_path = 'url path'
         general_read_successful = 'successfully read'
+        general_hash = 'hash'
 
         # -- Metadata sub-elements --
         # ---------------------------
@@ -55,12 +56,17 @@ class WebpageAdd:
                     {
                         "type" : "string"
                     },
+                    'hash':
+                    {
+                        "type" : "string"
+                    },
                     'successfully read':
                     {
                         "type" : "boolean"
                     }
                 },
-                "required" : ['domain', 'url path', 'successfully read']
+                "required" : ['domain', 'url path', 'hash',
+                              'successfully read']
             },
             'metadata':
             {
@@ -116,10 +122,6 @@ class WebpageDetails:
         "required" : ['domain', 'url path']
     }
 
-
-
-
-
 class WebpageDetailsResponse:
     ''' Definition of the webpage/details response JSON schema'''
     #pylint: disable=too-few-public-methods
@@ -132,6 +134,7 @@ class WebpageDetailsResponse:
         title = 'title'
         abstract = 'abstract'
         last_scanned = 'last scanned'
+        page_hash = 'hash'
 
     Schema = \
     {
@@ -157,6 +160,10 @@ class WebpageDetailsResponse:
             'last scanned':
             {
                 "type" : "boolean"
+            },
+            'hash':
+            {
+                "type" : "string"
             }
         },
         "required" : ['title', 'abstract', 'read successful', 'last scanned']
