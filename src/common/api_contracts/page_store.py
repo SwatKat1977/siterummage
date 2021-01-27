@@ -19,14 +19,14 @@ class WebpageAdd:
         #pylint: disable=too-few-public-methods
 
         # -- Top-level json elements --
-        toplevel_general = 'general settings'
+        toplevel_general = 'general_settings'
         toplevel_metadata = 'metadata'
 
         # -- General Settings sub-elements --
         # -----------------------------------
         general_domain = 'domain'
-        general_url_path = 'url path'
-        general_read_successful = 'successfully read'
+        general_url_path = 'url_path'
+        general_read_successful = 'successfully_read'
         general_hash = 'hash'
 
         # -- Metadata sub-elements --
@@ -43,7 +43,7 @@ class WebpageAdd:
 
         "properties":
         {
-            'general settings':
+            'general_settings':
             {
                 "additionalProperties" : False,
                 "properties":
@@ -52,7 +52,7 @@ class WebpageAdd:
                     {
                         "type" : "string"
                     },
-                    'url path':
+                    'url_path':
                     {
                         "type" : "string"
                     },
@@ -60,13 +60,13 @@ class WebpageAdd:
                     {
                         "type" : "string"
                     },
-                    'successfully read':
+                    'successfully_read':
                     {
                         "type" : "boolean"
                     }
                 },
-                "required" : ['domain', 'url path', 'hash',
-                              'successfully read']
+                "required" : ['domain', 'url_path', 'hash',
+                              'successfully_read']
             },
             'metadata':
             {
@@ -85,7 +85,7 @@ class WebpageAdd:
                 "required" : ['title', 'abstract']
             }
         },
-        "required" : ['general settings', 'metadata']
+        "required" : ['general_settings', 'metadata']
     }
 
 class WebpageDetails:
@@ -99,7 +99,7 @@ class WebpageDetails:
         # -- General Settings sub-elements --
         # -----------------------------------
         domain = 'domain'
-        url_path = 'url path'
+        url_path = 'url_path'
 
     Schema = \
     {
@@ -114,12 +114,12 @@ class WebpageDetails:
             {
                 "type" : "string"
             },
-            'url path':
+            'url_path':
             {
                 "type" : "string"
             }
         },
-        "required" : ['domain', 'url path']
+        "required" : ['domain', 'url_path']
     }
 
 class WebpageDetailsResponse:

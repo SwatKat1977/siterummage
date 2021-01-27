@@ -14,7 +14,6 @@ import os
 import sys
 sys.path.insert(0,'.')
 from quart import Quart
-from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 from .service import Service
 
 ## Quart application instance
@@ -49,6 +48,3 @@ if not os.getenv('SITERUMMAGE_PAGESTORE_CONFIG'):
 
 if not service.initialise():
     sys.exit()
-
-# foo = mysql_adaptor.connect('master_2021')
-# print(foo.call_stored_procedure('g'))

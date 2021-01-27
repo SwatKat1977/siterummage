@@ -21,7 +21,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"general settings\":\n    {\n        \"domain\": \"https://google.com\",\n        \"url path\": \"/foo\",\n        \"successfully read\": false\n    },\n    \"metadata\":\n    {\n        \"title\": \"strinhg\",\n        \"abstract\": \"Noooo\"\n    }\n}",
+							"raw": "{\n    \"general_settings\":\n    {\n        \"domain\": \"https://google.com\",\n        \"url_path\": \"/foobared\",\n        \"hash\": \"foo bar\",\n        \"successfully_read\": false\n    },\n    \"metadata\":\n    {\n        \"title\": \"strinhg\",\n        \"abstract\": \"Noooo\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -59,7 +59,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"domain\": \"https://google.com\",\n    \"url path\": \"/foo\"\n}",
+							"raw": "{\n    \"domain\": \"https://google.com\",\n    \"url_path\": \"/foobar\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -135,6 +135,84 @@
 				}
 			],
 			"description": "Page Store"
+		},
+		{
+			"name": "Big Broker",
+			"item": [
+				{
+					"name": "Add Scrape Node",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AuthKey",
+								"type": "text",
+								"value": "BigBroker2021"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"0X0DEAD\",\n    \"host\": \"127.0.0.1\",\n    \"port\": 3232\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3232/nodemanager/add",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3232",
+							"path": [
+								"nodemanager",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Registered Scrape Nodes",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "AuthKey",
+								"type": "text",
+								"value": "BigBroker2021"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"0X0DEAD\",\n    \"host\": \"127.0.0.1\",\n    \"port\": 3232\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3232/nodemanager/list",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3232",
+							"path": [
+								"nodemanager",
+								"list"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }

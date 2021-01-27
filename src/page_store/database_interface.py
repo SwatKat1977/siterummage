@@ -10,8 +10,7 @@ Dissemination of this information or reproduction of this material is strictly
 forbidden unless prior written permission is obtained from Siterummage.
 '''
 from time import sleep
-from common.api_contracts.page_store import WebpageAdd, WebpageDetails, \
-                                            WebpageDetailsResponse
+from common.api_contracts.page_store import WebpageDetailsResponse
 from common.logger import LogType
 from common.mysql_connector.mysql_adaptor import MySQLAdaptor
 
@@ -165,20 +164,15 @@ class DatabaseInterface:
         @param page_details Dictionary containing page details.
         @returns None.
         """
-        #pylint: disable=too-many-locals
-
-        # Extract general properties from page details.
-        general = page_details[WebpageAdd.Elements.toplevel_general]
-        domain = general[WebpageAdd.Elements.general_domain]
-        url_path = general[WebpageAdd.Elements.general_url_path]
-        read_successful = general[WebpageAdd.Elements.general_read_successful]
-        page_hash = general[WebpageAdd.Elements.general_hash]
 
         # Add core webpage entry
         ###########
         query = "INSERT INTO webpage(domain, url_path, read_successful, " + \
             "page_hash) VALUES(%s, %s, %s, %s)"
-        query_args = (domain, url_path, read_successful, page_hash)
+        query_args = (page_details.general_settings.domain,
+                      page_details.general_settings.url_path,
+                      page_details.general_settings.successfully_read,
+                      page_details.general_settings.hash)
         results, err_msg = connection.query(query, query_args, commit=True,
                                             keep_conn_alive=True)
         if err_msg:
@@ -193,13 +187,10 @@ class DatabaseInterface:
 
         # Add webpage metadata entry
         ###########
-        metadata = page_details[WebpageAdd.Elements.toplevel_metadata]
-        title = metadata[WebpageAdd.Elements.metadata_title]
-        abstract = metadata[WebpageAdd.Elements.metadata_abstract]
-
         query = "INSERT INTO webpage_metadata(webpage_id, title, abstract)" + \
             " VALUES(%s, %s, %s)"
-        query_args = (webpage_id, title, abstract)
+        query_args = (webpage_id, page_details.metadata.title,
+                      page_details.metadata.abstract)
         results, err_msg = connection.query(query, query_args, commit=True,
                                             keep_conn_alive=True)
         if err_msg:
@@ -220,14 +211,11 @@ class DatabaseInterface:
         @returns None.
         """
 
-        domain = page_details[WebpageDetails.Elements.domain]
-        url_path = page_details[WebpageDetails.Elements.url_path]
-
         query = "SELECT wp.last_scanned, wp.read_successful, " + \
                 "wp.page_hash, md.title, md.abstract " + \
                 "FROM webpage as wp LEFT JOIN webpage_metadata as md " + \
                 "ON wp.id = md.webpage_id WHERE wp.domain = %s AND wp.url_path = %s"
-        query_args = (domain, url_path)
+        query_args = (page_details.domain, page_details.url_path)
         results, err_msg = connection.query(query, query_args,
                                             keep_conn_alive=True)
         if err_msg:

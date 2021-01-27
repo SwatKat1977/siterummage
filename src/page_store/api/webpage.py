@@ -16,6 +16,7 @@ from common.http_status_code import HTTPStatusCode
 from common.logger import LogType
 from common.mime_type import MIMEType
 from common.api_contracts.page_store import WebpageAdd, WebpageDetails
+from common.api_utils import ApiUtils
 
 HEADERKEY_AUTH = 'AuthKey'
 
@@ -42,33 +43,20 @@ class ApiWebpage:
         """
 
         # Validate the request to ensure the auth key is present and valid.
-        validate_return = self._validate_auth_key()
+        validate_return = ApiUtils.validate_auth_key(request, HEADERKEY_AUTH,
+                                                     self._auth_key)
         if validate_return is not HTTPStatusCode.OK:
             return self._interface.response_class(
                 response = 'Invalid authentication key',
                 status = validate_return, mimetype = MIMEType.Text)
 
-        # Check for that the message body is of type application/json and that
-        # there is one, if not report a 400 error status with a human-readable.
-        body = await request.get_json()
-        if not body:
-            err_msg = 'Missing/invalid json body'
-            response = self._interface.response_class(
-                response=err_msg, status=HTTPStatusCode.BadRequest,
-                mimetype=MIMEType.Text)
-            return response
+        obj_instance, err_msg = await ApiUtils.convert_json_body_to_object(
+            request, WebpageAdd.Schema)
 
-        # Validate that the json body conforms to the expected schema.
-        # If the message isn't valid then a 400 error should be generated.
-        try:
-            jsonschema.validate(instance=body,
-                                schema=WebpageAdd.Schema)
-
-        except jsonschema.exceptions.ValidationError:
-            err_msg = 'Message body validation failed.'
+        if not obj_instance:
             return self._interface.response_class(
                 response=err_msg, status=HTTPStatusCode.BadRequest,
-                mimetype='text')
+                mimetype=MIMEType.Text)
 
         connection = self._db_interface.get_connection()
 
@@ -77,19 +65,16 @@ class ApiWebpage:
                 response='System busy',status=HTTPStatusCode.RequestTimeout,
                 mimetype=MIMEType.Text)
 
-        general_settings = body[WebpageAdd.Elements.toplevel_general]
-        domain = general_settings[WebpageAdd.Elements.general_domain]
-        url_path = general_settings[WebpageAdd.Elements.general_url_path]
-
         try:
             record_exists = self._db_interface.webpage_record_exists(
-                connection, domain, url_path, keep_alive=True)
+                connection, obj_instance.general_settings.domain,
+                obj_instance.general_settings.url_path, keep_alive=True)
 
         except RuntimeError as ex:
             return self._interface.response_class(
                 response = str(ex), status = HTTPStatusCode.NotAcceptable,
                 mimetype = MIMEType.Text)
-                         
+
         if record_exists:
             connection.close()
             return self._interface.response_class(
@@ -98,10 +83,9 @@ class ApiWebpage:
                 mimetype=MIMEType.Text)
 
         try:
-            await self._db_interface.add_webpage(connection, body)
+            await self._db_interface.add_webpage(connection, obj_instance)
 
         except RuntimeError as ex:
-            #connection.close()
             return self._interface.response_class(
                 response = str(ex), status = HTTPStatusCode.NotAcceptable,
                 mimetype = MIMEType.Text)
@@ -119,33 +103,20 @@ class ApiWebpage:
         """
 
         # Validate the request to ensure the auth key is present and valid.
-        validate_return = self._validate_auth_key()
+        validate_return = ApiUtils.validate_auth_key(request, HEADERKEY_AUTH,
+                                                     self._auth_key)
         if validate_return is not HTTPStatusCode.OK:
             return self._interface.response_class(
                 response = 'Invalid authentication key',
                 status = validate_return, mimetype = MIMEType.Text)
 
-        # Check for that the message body is of type application/json and that
-        # there is one, if not report a 400 error status with a human-readable.
-        body = await request.get_json()
-        if not body:
-            err_msg = 'Missing/invalid json body'
-            response = self._interface.response_class(
-                response=err_msg, status=HTTPStatusCode.BadRequest,
-                mimetype=MIMEType.Text)
-            return response
+        obj_instance, err_msg = await ApiUtils.convert_json_body_to_object(
+            request, WebpageDetails.Schema)
 
-        # Validate that the json body conforms to the expected schema.
-        # If the message isn't valid then a 400 error should be generated.
-        try:
-            jsonschema.validate(instance=body,
-                                schema=WebpageDetails.Schema)
-
-        except jsonschema.exceptions.ValidationError:
-            err_msg = 'Message body validation failed.'
+        if not obj_instance:
             return self._interface.response_class(
                 response=err_msg, status=HTTPStatusCode.BadRequest,
-                mimetype='text')
+                mimetype=MIMEType.Text)
 
         connection = self._db_interface.get_connection()
 
@@ -154,31 +125,9 @@ class ApiWebpage:
                 response='System busy',status=HTTPStatusCode.RequestTimeout,
                 mimetype=MIMEType.Text)
 
-        response = await self._db_interface.get_webpage(connection, body)
+        resp = await self._db_interface.get_webpage(connection, obj_instance)
         connection.close()
 
         return self._interface.response_class(
-            response=json.dumps(response),status=HTTPStatusCode.OK,
+            response=json.dumps(resp),status=HTTPStatusCode.OK,
             mimetype=MIMEType.JSON)
-
-    def _validate_auth_key(self):
-        """!@brief Validate the authentication key for a request.
-        @param self The object pointer.
-        @returns a status code:
-        * 200 (OK) - Authentication key good
-        * 401 (Unauthenticated) - Missing or invalid authentication key
-        * 403 (Forbidden) - Invalid authentication key
-        """
-
-        # Verify that an authorisation key exists in the request header.
-        if HEADERKEY_AUTH not in request.headers:
-            return HTTPStatusCode.Unauthenticated
-
-        authorisation_key = request.headers[HEADERKEY_AUTH]
-
-        # Verify the authorisation key against what is specified in the
-        # configuration file.  If it isn't valid then return 403 (Forbidden).
-        if authorisation_key != self._auth_key:
-            return HTTPStatusCode.Forbidden
-
-        return HTTPStatusCode.OK
