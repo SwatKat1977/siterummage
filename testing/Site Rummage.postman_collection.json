@@ -67,12 +67,10 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:2020/webpage/details",
-							"protocol": "http",
+							"raw": "{{PAGE_STORE_URL}}/webpage/details",
 							"host": [
-								"localhost"
+								"{{PAGE_STORE_URL}}"
 							],
-							"port": "2020",
 							"path": [
 								"webpage",
 								"details"
@@ -207,6 +205,80 @@
 							"path": [
 								"nodemanager",
 								"list"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Processing Queue",
+			"item": [
+				{
+					"name": "Pop entry from queue",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "AuthKey",
+								"type": "text",
+								"value": "ProcessingQueue2021"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"processing_id\": \"https://google.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PROCESSING_QUEUE_URL}}/queue/pop",
+							"host": [
+								"{{PROCESSING_QUEUE_URL}}"
+							],
+							"path": [
+								"queue",
+								"pop"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add entry to queue",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AuthKey",
+								"type": "text",
+								"value": "ProcessingQueue2021"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://google.com/foobar\",\n    \"link_type\": \"new\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PROCESSING_QUEUE_URL}}/queue/add",
+							"host": [
+								"{{PROCESSING_QUEUE_URL}}"
+							],
+							"path": [
+								"queue",
+								"add"
 							]
 						}
 					},

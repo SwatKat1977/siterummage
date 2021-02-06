@@ -24,16 +24,18 @@ class ConfigurationSchema:
         #pylint: disable=too-few-public-methods
 
         # -- Top-level json elements --
+        toplevel_api_settings = 'api settings'
         toplevel_db_settings = 'database settings'
+
+        # -- API Settings sub-elements --
+        # --------------------------------
+        api_settings_auth_key = 'auth key'
 
         # -- Database Settings sub-elements --
         # ------------------------------------
-        db_settings_database = 'database'
-        db_settings_host = 'host'
-        db_settings_pool_name = 'pool_name'
-        db_settings_pool_size = 'pool_size'
-        db_settings_port = 'port'
-        db_settings_username = 'username'
+        db_settings_cache_size = 'cache size'
+        db_settings_database_file = 'database file'
+        db_settings_fail_on_no_db = "fail on no database"
 
     json_schema = \
     {
@@ -44,42 +46,40 @@ class ConfigurationSchema:
 
         "properties":
         {
-            'database settings':
+            "api settings":
             {
                 "additionalProperties" : False,
                 "properties":
                 {
-                    'database':
-                    {
-                        "type" : "string"
-                    },
-                    'host':
-                    {
-                        "type" : "string"
-                    },
-                    'pool_name':
-                    {
-                        "type" : "string"
-                    },
-                    'pool_size':
-                    {
-                        "type" : "integer",
-                        "minimum": 1,
-                        "maximum": 32
-                    },
-                    'port':
-                    {
-                        "type" : "integer",
-                        "minimum": 1
-                    },
-                    'username':
+                    "auth key":
                     {
                         "type" : "string"
                     }
                 },
-                "required" : ['database', 'host', 'pool_name', 'pool_size',
-                              'port', 'username']
+                "required" : ["auth key"]
+            },
+            "database settings":
+            {
+                "additionalProperties" : False,
+                "properties":
+                {
+                    "cache size":
+                    {
+                        "type" : "integer",
+                        "minimum": 1
+                    },
+                    "database file":
+                    {
+                        "type" : "string"
+                    },
+                    "fail on no database":
+                    {
+                        "type": "boolean"
+                    }
+                },
+                "required" : ["cache size", "database file",
+                              "fail on no database"]
             }
         },
-        "required" : ['database settings']
+        "required" : ["api settings", "database settings"]
     }

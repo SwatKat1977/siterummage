@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 from typing import Union
 import jsonschema
-from .configuration import Configuration, DatabaseSettings
+from .configuration import ApiSettings, Configuration, DatabaseSettings
 from .configuration_schema import ConfigurationSchema as schema
 
 class ConfigurationManager:
@@ -31,7 +31,6 @@ class ConfigurationManager:
         """
         return self._last_error_msg
 
-    #  @param self The object pointer.
     def __init__(self) -> object:
         """!@brief Class constructor.
         @param self The object pointer.
@@ -40,7 +39,6 @@ class ConfigurationManager:
 
         self._last_error_msg = ''
 
-    #  @param self The object pointer.
     def parse_config_file(self, filename) -> Union[Configuration,None]:
         """!@brief Parse the configuration file and then very it against the
                    JSON schema.  Once verified return an instance of the
@@ -81,20 +79,31 @@ class ConfigurationManager:
         raw_db_settings = raw_json[schema.Elements.toplevel_db_settings]
         db_settings = self._process_db_settings(raw_db_settings)
 
-        return Configuration(db_settings)
+        raw_api_settings = raw_json[schema.Elements.toplevel_api_settings]
+        api_settings = self._process_api_settings(raw_api_settings)
 
+        return Configuration(api_settings, db_settings)
 
-    ## Process the central controller api settings section.
-    #  @param self The object pointer.
-    def _process_db_settings(self, settings):
+    def _process_api_settings(self, settings) -> ApiSettings:
+        """!@brief Process the api settings section.
+        @param self The object pointer.
+        @param settings Raw JSON to process.
+        @returns ApiSettings.
+        """
         #pylint: disable=no-self-use
 
-        database = settings[schema.Elements.db_settings_database]
-        host = settings[schema.Elements.db_settings_host]
-        pool_name = settings[schema.Elements.db_settings_pool_name]
-        pool_size = settings[schema.Elements.db_settings_pool_size]
-        port = settings[schema.Elements.db_settings_port]
-        username = settings[schema.Elements.db_settings_username]
+        auth_key = settings[schema.Elements.api_settings_auth_key]
+        return ApiSettings(auth_key)
 
-        return DatabaseSettings(username, database, host, port, pool_name,
-                                pool_size)
+    def _process_db_settings(self, settings) -> DatabaseSettings:
+        """!@brief Process the database settings section.
+        @param self The object pointer.
+        @param settings Raw JSON to process.
+        @returns DatabaseSettings.
+        """
+        #pylint: disable=no-self-use
+
+        cache_size = settings[schema.Elements.db_settings_cache_size]
+        db_filename = settings[schema.Elements.db_settings_database_file]
+        fail_no_db = settings[schema.Elements.db_settings_fail_on_no_db]
+        return DatabaseSettings(cache_size, db_filename, fail_no_db)

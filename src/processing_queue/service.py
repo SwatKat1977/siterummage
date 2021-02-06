@@ -18,17 +18,19 @@ import os
 from common.logger import Logger, LogType
 from common.core_version import CORE_VERSION
 from common.service_base import ServiceBase
-from .api.health import ApiHealth
-from .api.webpage import ApiWebpage
+from processing_queue.api.queue import ApiQueue
+from processing_queue.db_caching.queue_cache import QueueCache
 from .configuration_manager import ConfigurationManager
-from .database_interface import DatabaseInterface
+from .db_interface import DbInterface
+from .urls_being_processed import UrlsBeingProcessed
 from .version import VERSION
 
 class Service(ServiceBase):
-    """ Siterummage Page Store microservice class """
+    """ Siterummage Processing Queue microservice class """
+    #pylint: disable=too-many-instance-attributes
 
     ## Title text logged during initialisation.
-    title_text = 'Site Rummagge Page Store Microservice'
+    title_text = 'Site Rummagge Processing Queue Microservice'
 
     ## Copyright text logged on initialisation etc.
     copyright_text = 'Copyright 2021 Site Rummage'
@@ -51,8 +53,11 @@ class Service(ServiceBase):
 
         self._db_interface = None
 
-        self._api_health = ApiHealth(self._quart)
-        self._api_webpage = None
+        self._api_queue = None
+
+        self._queue_cache = None
+
+        self._processing_queue = None
 
     def _initialise(self) -> bool:
         self._logger.write_to_console = True
@@ -65,7 +70,7 @@ class Service(ServiceBase):
 
         config_mgr = ConfigurationManager()
 
-        config_file = os.getenv('SITERUMMAGE_PAGESTORE_CONFIG')
+        config_file = os.getenv('SITERUMMAGE_PROCESSINGQUEUE_CONFIG')
 
         self._configuration = config_mgr.parse_config_file(config_file)
         if not self._configuration:
@@ -76,31 +81,55 @@ class Service(ServiceBase):
         self._logger.log(LogType.Info, '+==============================+')
         db_config = self._configuration.db_settings
         self._logger.log(LogType.Info, '+== Database Settings :->')
-        self._logger.log(LogType.Info, f'+= database  : {db_config.database}')
-        self._logger.log(LogType.Info, f'+= host      : {db_config.host}')
-        self._logger.log(LogType.Info, f'+= username  : {db_config.username}')
-        self._logger.log(LogType.Info, f'+= port      : {db_config.port}')
-        self._logger.log(LogType.Info, f'+= pool_name : {db_config.pool_name}')
-        self._logger.log(LogType.Info, f'+= pool_size : {db_config.pool_size}')
+        self._logger.log(LogType.Info,
+                         f'+= Cache Size          : {db_config.cache_size}')
+        self._logger.log(LogType.Info,
+                         f'+= DB Filename         : {db_config.database_file}')
+        self._logger.log(LogType.Info,
+                         f'+= Fail On No Database : {db_config.fail_on_no_database}')
+        self._logger.log(LogType.Info, '+== Api Settings :->')
+        self._logger.log(LogType.Info, '+= Auth Key : ******')
         self._logger.log(LogType.Info, '+==============================+')
 
-        self._db_interface = DatabaseInterface(self._logger,
-                                               self._configuration)
+        self._db_interface = DbInterface(db_config.database_file)
 
-        if not self._db_interface.database_connection_valid():
+        if not self._db_interface.database_exists():
+            if self._configuration.db_settings.fail_on_no_database:
+                self._logger.log(LogType.Error,
+                                 "DB doesn't exist and fail on create is set")
+                return False
+
+            if not self._db_interface.build_database():
+                self._logger.log(LogType.Error,
+                                 self._db_interface.last_error_message)
+                return False
+
+            self._logger.log(LogType.Info, 'Database created successfully')
+
+        if not self._db_interface.open():
+            self._logger.log(LogType.Error,
+                             self._db_interface.last_error_message)
             return False
 
-        self._api_webpage = ApiWebpage(self._quart, self._db_interface,
-                                       self._configuration)
+        self._processing_queue = UrlsBeingProcessed()
+
+        self._queue_cache = QueueCache(self._db_interface, self._configuration,
+                                       self._logger, self._processing_queue)
+
+        self._api_queue = ApiQueue(self._quart, self._db_interface,
+                                   self._configuration, self._processing_queue,
+                                   self._queue_cache)
 
         self._is_initialised = True
 
         return True
 
     async def _main_loop(self):
-        # if not self._master_thread_class.initialise():
-        #     return False
-        pass
+        ...
 
     def _shutdown(self):
         self._logger.log(LogType.Info, 'Shutting down...')
+
+        if self._db_interface.is_connected:
+            self._db_interface.close()
+            self._logger.log(LogType.Info, '|-> Database connection closed')

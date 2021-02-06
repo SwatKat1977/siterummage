@@ -1,3 +1,4 @@
 src/html
 __pycache__
 .DS_Store
+queue.db
