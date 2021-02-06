@@ -1,0 +1,45 @@
+version: "3.8"
+
+networks:
+  localdev:
+    driver: bridge
+
+services:
+
+  # #################
+  # ## Infrastructure
+  # #################
+
+  # Central MySql database used by the back-end systems.
+  master-db:
+    image: mysql:8.0
+    container_name: master-db
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports:
+      - "4000:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: master_2021
+    volumes:
+      - ./database/docker:/etc/mysql/conf.d
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/dump0.sql
+    networks:
+      - localdev
+
+  # ##############
+  # ## Services ##
+  # ##############
+
+  # Page store (database).
+  page-store:
+    build:
+      context: .
+      dockerfile: Dockerfile.page_store
+    container_name: page-store
+    ports:
+      - "2020:2020"
+    networks:
+      - localdev
+    links:
+      - master-db
+ 
