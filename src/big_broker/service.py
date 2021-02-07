@@ -34,7 +34,7 @@ class Service(ServiceBase):
     copyright_text = 'Copyright 2021 Site Rummage'
 
     ## License text logged on initialisation etc.
-    license_text = 'All Rights Reserved. Proprietary and confidential'
+    license_text = 'Licensed under The GNU Public License v3.0'
 
     def __init__(self, new_instance):
         super().__init__()
