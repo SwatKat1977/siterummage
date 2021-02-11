@@ -1,0 +1,33 @@
+#!/bin/sh
+command-that-increases-version version.text
+
+
+
+#!/bin/bash
+
+echo "determining branch"
+
+if ! [ -t 0 ]; then
+  read -a ref
+fi
+
+IFS='/' read -ra REF <<< "${ref[2]}"
+branch="${REF[2]}"
+
+if [ "master" == "$branch" ]; then
+  echo 'Pushed changes to master'
+
+elif [ "staging" == "$branch" ]; then
+  echo 'Pushed changes to staging'
+
+elif [ "development" == "$branch" ]; then
+  echo 'Pushed changes to development'
+  awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1";"}1' OFS='= ' common/info.py
+  git add common/info.py
+  echo 'Updated build number...'
+
+else:
+  echo 'Pushed changes to branch $branch'
+fi
+
+echo "done"
