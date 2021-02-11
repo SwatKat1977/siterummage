@@ -13,12 +13,6 @@ elif [ "development" == "$branch" ]; then
   mv src/common/tmp.py src/common/core_version.py
   git add src/common/core_version.py
 
-elif [ "build_number_git_hooks" == "$branch" ]; then
-  echo '[INFO] ... TESTING ...'
-  awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1}1' OFS='= ' src/common/core_version.py > src/common/tmp.py
-  mv src/common/tmp.py src/common/core_version.py
-  git add src/common/core_version.py
-
 else
   echo "[INFO] Pushed changes to branch $branch"
 fi
