@@ -9,6 +9,10 @@ branch=`git rev-parse --abbrev-ref HEAD`
 
 echo "[INFO] Pushing changes to '$branch' branch"
 
+if [ "${COMMIT_SOURCE}" = "message" ];then
+    echo 'msg ignore'
+    exit 0
+
 if [ "master" == "$branch" ]; then
   echo '[INFO] Pushing changes to master'
 
