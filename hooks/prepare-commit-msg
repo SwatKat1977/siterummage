@@ -3,8 +3,6 @@
 commit_msg_file=$1
 commit_source=$2
 
-echo "[INFO] File: $commit_msg_file | source : $commit_source"
-
 branch=`git rev-parse --abbrev-ref HEAD`
 
 # There are multiple commit sources, we are only interested in merge.
