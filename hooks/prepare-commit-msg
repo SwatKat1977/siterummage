@@ -7,8 +7,6 @@ echo "[INFO] File: $commit_msg_file | source : $commit_source"
 
 branch=`git rev-parse --abbrev-ref HEAD`
 
-echo "[INFO] Pushing changes to '$branch' branch"
-
 # There are multiple commit sources, we are only interested in merge.
 if [ "${commit_source}" != merge ]; then
     echo '[INFO] Not a merge commit, not updating build number...'
@@ -19,7 +17,7 @@ if [ "master" == "$branch" ]; then
   echo '[INFO] Pushing changes to master'
 
 elif [ "development" == "$branch" ]; then
-  echo '[INFO] Pushinf changes to development, Updated build number...'
+  echo '[INFO] Merging changes to development, Updated build number...'
   awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1}1' OFS='= ' src/common/core_version.py > src/common/tmp.py
   mv src/common/tmp.py src/common/core_version.py
   git add src/common/core_version.py
