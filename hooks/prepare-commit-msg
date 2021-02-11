@@ -9,8 +9,9 @@ branch=`git rev-parse --abbrev-ref HEAD`
 
 echo "[INFO] Pushing changes to '$branch' branch"
 
-if [ "${commit_source}" = message ]; then
-    echo 'msg ignore'
+# There are multiple commit sources, we are only interested in merge.
+if [ "${commit_source}" != merge ]; then
+    echo '[INFO] Not a merge commit, not updating build number...'
     exit 0
 fi
 
