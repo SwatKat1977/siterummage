@@ -2,7 +2,6 @@
 
 branch=`git rev-parse --abbrev-ref HEAD`
 
-echo `ls src/common`
 echo "[INFO] Pushing changes to '$branch' branch"
 
 if [ "master" == "$branch" ]; then
@@ -10,11 +9,6 @@ if [ "master" == "$branch" ]; then
 
 elif [ "development" == "$branch" ]; then
   echo '[INFO] Pushinf changes to development, Updated build number...'
-  awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1";"}1' OFS='= ' src/common/core_version.py > src/common/core_version.py
-  git add src/common/core_version.py
-
-elif [ "build_number_git_hooks" == "$branch" ]; then
-  echo '[INFO] ... TESTING ...'
   awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1";"}1' OFS='= ' src/common/core_version.py > src/common/core_version.py
   git add src/common/core_version.py
 
