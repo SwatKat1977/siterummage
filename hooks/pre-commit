@@ -9,8 +9,13 @@ if [ "master" == "$branch" ]; then
 
 elif [ "development" == "$branch" ]; then
   echo '[INFO] Pushinf changes to development, Updated build number...'
-  awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1";"}1' OFS='= ' common/info.py
-  git add common/info.py
+  awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1";"}1' OFS='= ' src/common/info.py
+  git add src/common/info.py
+
+elif [ "build_number_git_hooks" == "$branch" ]; then
+  echo '[INFO] ... TESTING ...'
+  awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1";"}1' OFS='= ' src/common/info.py
+  git add src/common/info.py
 
 else
   echo "[INFO] Pushed changes to branch $branch"
