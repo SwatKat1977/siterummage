@@ -1,11 +1,6 @@
-#!/bin/sh
-command-that-increases-version version.text
-
-
-
 #!/bin/bash
 
-echo "determining branch"
+echo "[INFO] Determining branch..."
 
 if ! [ -t 0 ]; then
   read -a ref
@@ -13,6 +8,8 @@ fi
 
 IFS='/' read -ra REF <<< "${ref[2]}"
 branch="${REF[2]}"
+
+echo "[INFO] Current branch: $branch"
 
 if [ "master" == "$branch" ]; then
   echo 'Pushed changes to master'
