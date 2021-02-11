@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo "[INFO] Determining branch..."
+echo "[INFO] Determining which branch we are pushing to..."
 
-BRANCH=`git rev-parse --abbrev-ref HEAD`
+branch=`git rev-parse --abbrev-ref HEAD`
 
 echo $branch
 
