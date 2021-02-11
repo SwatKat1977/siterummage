@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ## Core Version of siterummage
 CORE_VERSION = 'V0.0.0'
 
-CORE_BUILD_NO = 1;
+CORE_BUILD_NO = 0
 
 ## Copyright text logged on initialisation etc.
 COPYRIGHT_TEXT = 'Copyright 2021 Site Rummage'
