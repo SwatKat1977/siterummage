@@ -14,17 +14,17 @@ if [ "$GIT_DIR" == "" ]; then
   exit 1
 fi
 
-if [ -f "$GIT_DIR/hooks/pre-commit" ]; then
-  echo "There is already a pre-commit hook installed. Delete it first."
+if [ -f "$GIT_DIR/hooks/prepare-commit-msg" ]; then
+  echo "There is already a prepare-commit-msg hook installed. Delete it first."
   echo
-  echo "    rm '$GIT_DIR/hooks/pre-commit'"
+  echo "    rm '$GIT_DIR/hooks/prepare-commit-msg'"
   echo
   exit 2
 fi
 
-cp hooks/pre-commit "$GIT_DIR/hooks/pre-commit"
+cp hooks/prepare-commit-msg "$GIT_DIR/hooks/prepare-commit-msg"
 
-chmod +x "$GIT_DIR/hooks/pre-commit"
+chmod +x "$GIT_DIR/hooks/prepare-commit-msg"
 
 echo
 echo "You're all set! Happy hacking!"
