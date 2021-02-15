@@ -14,22 +14,30 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
+import base64
 import json
+from Crypto.Cipher import PKCS1_OAEP
 from quart import request
 import common.api_contracts.big_broker.node_management as schemas
 from common.api_utils import ApiUtils
 from common.http_status_code import HTTPStatusCode
+from common.logger import LogType
 from common.mime_type import MIMEType
 from ..scrape_node_entry import ScrapeNodeEntry
 
 class ApiNodeManagement:
+    __slots__ = ['_configuration', '_interface', '_logger', '_private_key',
+                 '_scrape_node_list']
 
     header_auth_key = 'AuthKey'
 
-    def __init__(self, interface_instance, configuration, scrape_node_list):
+    def __init__(self, interface_instance, configuration, scrape_node_list,
+                 logger, private_key):
         self._interface = interface_instance
         self._configuration = configuration
         self._scrape_node_list = scrape_node_list
+        self._logger = logger
+        self._private_key = private_key
 
         # Add route : /nodemanager/add
         self._interface.add_url_rule('/nodemanager/add',
@@ -64,20 +72,55 @@ class ApiNodeManagement:
                 response=err_msg, status=HTTPStatusCode.BadRequest,
                 mimetype=MIMEType.Text)
 
-        if self._scrape_node_list.node_exists(obj_instance.identifier):
+        try:
+            identifier = base64.b64decode(obj_instance.identifier)
+        except Exception:
             return self._interface.response_class(
-                response= 'node identifier alreedy registered',
+                response='Bad identifier', status=HTTPStatusCode.BadRequest,
+                mimetype=MIMEType.Text)
+
+        decryptor = PKCS1_OAEP.new(key=self._private_key)
+
+        try:
+            identifier = decryptor.decrypt(identifier)
+        
+        except ValueError:
+            return self._interface.response_class(
+                response='Invalid crypto key',
                 status=HTTPStatusCode.BadRequest, mimetype=MIMEType.Text)
 
-        node_entry = ScrapeNodeEntry(obj_instance.identifier, obj_instance.host,
+        hostname = obj_instance.host
+        network_port = obj_instance.port
+        expected_ident = str.encode(f"NODE_{hostname}_{network_port}")
+ 
+        if identifier != expected_ident:
+            return self._interface.response_class(
+                response='Invalid crypto key',
+                status=HTTPStatusCode.BadRequest, mimetype=MIMEType.Text)
+
+        decoded_ident = identifier.decode("utf-8")
+        if self._scrape_node_list.node_exists(identifier):
+
+            msg = f"Scrape node '{decoded_ident}' was re-registered"
+            self._logger.log(LogType.Info, msg)
+            return self._interface.response_class(
+                response='Node identifier alreedy registered',
+                status=HTTPStatusCode.OK, mimetype=MIMEType.Text)
+
+        node_entry = ScrapeNodeEntry(identifier, obj_instance.host,
                                      obj_instance.port)
 
-        if not self._scrape_node_list.add_node(node_entry):
+        if not self._scrape_node_list.add_node(identifier, node_entry):
+            msg = f"Scrape node '{decoded_ident}' was re-registered"
+            self._logger.log(LogType.Info, msg)
             return self._interface.response_class(
-                response= 'node identifier alreedy registered',
-                status=HTTPStatusCode.BadRequest, mimetype=MIMEType.Text)
+                response= 'Node identifier alreedy registered',
+                status=HTTPStatusCode.OK, mimetype=MIMEType.Text)
 
-        return self._interface.response_class(response='OK',
+        msg = f"Scrape node '{decoded_ident}' has been registered"
+        self._logger.log(LogType.Info, msg)
+
+        return self._interface.response_class(response='Node registerd',
             status=HTTPStatusCode.OK, mimetype=MIMEType.Text)
 
     async def _list_scrape_node(self) -> None:

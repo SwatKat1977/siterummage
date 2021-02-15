@@ -27,7 +27,7 @@ class ScrapeNodeList:
         """
         self._nodes = {}
 
-    def add_node(self, node) -> bool:
+    def add_node(self, identifier, node) -> bool:
         """!@brief Add a scrape node to the list. If the node exists then
                    False is returned, otherwise True.
         @param self The object pointer.
@@ -35,10 +35,10 @@ class ScrapeNodeList:
         @returns True = Succcess, False = Failure (already exists).
         """
 
-        if node.identifier in self._nodes:
+        if identifier in self._nodes:
             return False
 
-        self._nodes[node.identifier] = node
+        self._nodes[identifier] = node
         return True
 
     def del_node(self, node_identifier) -> None:

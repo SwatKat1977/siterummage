@@ -15,5 +15,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-# ## Version of Siterummage Page Store Microservice
-VERSION = 'V0.0.0'
+class CommonConfigurationKey:
+
+    ## Public key filename (e.g. 'public_key.pem').
+    public_key_filename = 'public_key_file'
+
+    ## API Endpoint.
+    api_endpoint = 'api_endpoint'
+
+    ## API Authentication key.
+    api_auth_key = 'auth_key'

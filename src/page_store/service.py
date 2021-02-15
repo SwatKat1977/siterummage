@@ -16,25 +16,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 import os
 from common.logger import Logger, LogType
-from common.core_version import CORE_VERSION
+from common.info import BUILD_NO, COPYRIGHT_TEXT, CORE_VERSION, LICENSE_TEXT
 from common.service_base import ServiceBase
 from .api.health import ApiHealth
 from .api.webpage import ApiWebpage
 from .configuration_manager import ConfigurationManager
 from .database_interface import DatabaseInterface
-from .version import VERSION
 
 class Service(ServiceBase):
     """ Siterummage Page Store microservice class """
 
     ## Title text logged during initialisation.
     title_text = 'Site Rummagge Page Store Microservice'
-
-    ## Copyright text logged on initialisation etc.
-    copyright_text = 'Copyright 2021 Site Rummage'
-
-    ## License text logged on initialisation etc.
-    license_text = 'Licensed under The GNU Public License v3.0'
 
     def __init__(self, new_instance):
         super().__init__()
@@ -58,10 +51,10 @@ class Service(ServiceBase):
         self._logger.write_to_console = True
         self._logger.initialise()
 
-        self._logger.log(LogType.Info,
-                         f'{self.title_text} {VERSION} (Core Version {CORE_VERSION})')
-        self._logger.log(LogType.Info, self.copyright_text)
-        self._logger.log(LogType.Info, self.license_text)
+        self._logger.log(LogType.Info, f'{self.title_text} {CORE_VERSION}' + \
+                         f'-{BUILD_NO}')
+        self._logger.log(LogType.Info, COPYRIGHT_TEXT)
+        self._logger.log(LogType.Info, LICENSE_TEXT)
 
         config_mgr = ConfigurationManager()
 

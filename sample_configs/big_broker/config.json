@@ -13,6 +13,7 @@
     },
     "api settings":
     {
-        "auth key" : "BigBroker2021"
+        "auth key" : "BigBroker2021",
+        "private key file": "private_key.pem"
     }
 }

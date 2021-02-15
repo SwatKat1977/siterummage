@@ -14,14 +14,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
+from enum import Enum
 
-## Core Version of siterummage
-CORE_VERSION = 'V0.0.0'
+class EventID(Enum):
+    ''' Enumeration containing events used by Scrape Node '''
 
-CORE_BUILD_NO = 1
-
-## Copyright text logged on initialisation etc.
-COPYRIGHT_TEXT = 'Copyright 2021 Site Rummage'
-
-## License text logged on initialisation etc.
-LICENSE_TEXT = 'Licensed under The GNU Public License v3.0'
+    NewScrapeTask = 0
+    GetUrlBeingProcessed = 1
+    StoreResults = 2
+    AddLinksToQueue = 3
+    SendCompleteTask = 4

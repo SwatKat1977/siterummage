@@ -86,7 +86,7 @@ class ProcessingQueueApi:
 class BigBrokerApiSettings:
     #pylint: disable=too-few-public-methods
     """ Settings related to the Big Broker Api """
-    __slots__ = ['_auth_key']
+    __slots__ = ['_auth_key', '_private_key_file']
 
     @property
     def auth_key(self) -> str:
@@ -96,8 +96,17 @@ class BigBrokerApiSettings:
         """
         return self._auth_key
 
-    def __init__(self, auth_key):
+    @property
+    def private_key(self) -> str:
+        """!@brief Private_key used in the Api (Getter).
+        @param self The object pointer.
+        @returns string.
+        """
+        return self._private_key_file
+
+    def __init__(self, auth_key, private_key_file):
         self._auth_key = auth_key
+        self._private_key_file = private_key_file
 
 class Configuration:
     """ Overal configuration settings """

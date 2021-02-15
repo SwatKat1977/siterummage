@@ -15,6 +15,48 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
+'''
+NodeManagerListResponseSchema = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+
+    "definitions":
+    {
+        'node_entry':
+        {
+            "type" : "object",
+            "properties":
+            {
+                'identifier':
+                {
+                    "type": "string"
+                },
+                'host':
+                {
+                    "type": "string"
+                },
+                'port':
+                {
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": False,
+            "required": ['identifier', 'host', 'port']
+        }
+    },
+    "type" : "object",
+    "properties":
+    {
+        'nodes':
+        {
+            "type": "array",
+            "items": {"$ref": f"#/definitions/{'node_entry'}"}
+        }
+    },
+    "required" : ['nodes'],
+    "additionalProperties" : False
+}
+'''
+
 # url text NOT NULL,
 # insertion_date integer NOT NULL,
 # processing_id text DEFAULT NULL,
@@ -35,23 +77,34 @@ class AddToQueue:
     {
         "$schema": "http://json-schema.org/draft-07/schema#",
 
-        "type" : "object",
-        "additionalProperties" : False,
-
-        "properties":
+        "definitions":
         {
-            'url':
+            'link_entry':
             {
-                "type" : "string",
-                "minLength": 4
-            },
-            'link_type':
-            {
-                "type" : "string",
-                "enum": ["new", "rescan"]
+                "type" : "object",
+                "properties":
+                {
+                    'url':
+                    {
+                        "type" : "string",
+                        "minLength": 4
+                    }
+                },
+                "additionalProperties": False,
+                "required": ['url']
             }
         },
-        "required" : ['url', 'link_type']
+        "type" : "object",
+        "properties":
+        {
+            'links':
+            {
+                "type": "array",
+                "items": {"$ref": f"#/definitions/{'link_entry'}"}
+            }
+        },
+        "required" : ['links'],
+        "additionalProperties" : False
     }
 
 class PopFromQueue:

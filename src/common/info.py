@@ -15,5 +15,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-# ## Version of Processing Queue Microservice
-VERSION = 'V0.0.0'
+## Core Version of siterummage
+CORE_VERSION = 'V0.0.0'
+
+BUILD_NO = 0
+
+## Copyright text logged on initialisation etc.
+COPYRIGHT_TEXT = 'Copyright 2021 Site Rummage'
+
+## License text logged on initialisation etc.
+LICENSE_TEXT = 'Licensed under The GNU Public License v3.0'

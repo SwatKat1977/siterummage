@@ -16,14 +16,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 import os
 from common.logger import Logger, LogType
-from common.core_version import CORE_VERSION
+from common.info import BUILD_NO, COPYRIGHT_TEXT, CORE_VERSION, LICENSE_TEXT
 from common.service_base import ServiceBase
 from processing_queue.api.queue import ApiQueue
 from processing_queue.db_caching.queue_cache import QueueCache
 from .configuration_manager import ConfigurationManager
 from .db_interface import DbInterface
 from .urls_being_processed import UrlsBeingProcessed
-from .version import VERSION
 
 class Service(ServiceBase):
     """ Siterummage Processing Queue microservice class """
@@ -31,12 +30,6 @@ class Service(ServiceBase):
 
     ## Title text logged during initialisation.
     title_text = 'Site Rummagge Processing Queue Microservice'
-
-    ## Copyright text logged on initialisation etc.
-    copyright_text = 'Copyright 2021 Site Rummage'
-
-    ## License text logged on initialisation etc.
-    license_text = 'All Rights Reserved. Proprietary and confidential'
 
     def __init__(self, new_instance):
         super().__init__()
@@ -46,7 +39,7 @@ class Service(ServiceBase):
         ## Instance of the logging wrapper class
         self._logger = Logger()
 
-        ## _is_initialised is inherited from parent class ServiceThread
+        ## _is_initialised is inherited from parent class ServiceBase
         self._is_initialised = False
 
         self._configuration = None
@@ -63,10 +56,10 @@ class Service(ServiceBase):
         self._logger.write_to_console = True
         self._logger.initialise()
 
-        self._logger.log(LogType.Info,
-                         f'{self.title_text} {VERSION} (Core Version {CORE_VERSION})')
-        self._logger.log(LogType.Info, self.copyright_text)
-        self._logger.log(LogType.Info, self.license_text)
+        self._logger.log(LogType.Info, f'{self.title_text} {CORE_VERSION}' + \
+                         f'-{BUILD_NO}')
+        self._logger.log(LogType.Info, COPYRIGHT_TEXT)
+        self._logger.log(LogType.Info, LICENSE_TEXT)
 
         config_mgr = ConfigurationManager()
 

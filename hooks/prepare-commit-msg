@@ -16,9 +16,9 @@ if [ "master" == "$branch" ]; then
 
 elif [ "development" == "$branch" ]; then
   echo '[INFO] Merging changes to development, Updated build number...'
-  awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1}1' OFS='= ' src/common/core_version.py > src/common/tmp.py
-  mv src/common/tmp.py src/common/core_version.py
-  git add src/common/core_version.py
+  awk -F '= ' '/CORE_BUILD_NO/{$2=$2+1}1' OFS='= ' src/common/info.py > src/common/tmp.py
+  mv src/common/tmp.py src/common/info.py
+  git add src/common/info.py
 
 else
   echo "[INFO] Pushed changes to branch $branch"

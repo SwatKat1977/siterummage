@@ -17,8 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 from typing import Union
 import jsonschema
-from .configuration import BigBrokerApiSettings, Configuration, PageStoreApi, \
-                           ProcessingQueueApi
+from common.common_configuration_key import CommonConfigurationKey
+from .configuration import ApiSettings, BigBrokerApi, Configuration, \
+                           PageStoreApi, ProcessingQueueApi
 from .configuration_schema import ConfigurationSchema as schema
 
 class ConfigurationManager:
@@ -37,9 +38,10 @@ class ConfigurationManager:
         @param self The object pointer.
         @returns ConfigurationManager instance.
         """
+
         self._last_error_msg = ''
 
-    def parse_config_file(self, filename) -> Union[Configuration, None]:
+    def parse_config_file(self, filename) -> Union[Configuration,None]:
         """!@brief Parse the configuration file and then very it against the
                    JSON schema.  Once verified return an instance of the
                    Configuration class.
@@ -69,40 +71,68 @@ class ConfigurationManager:
             return None
 
         try:
-            jsonschema.validate(instance=raw_json, schema=schema.json_schema)
+            jsonschema.validate(instance=raw_json, schema=schema.schema)
 
         except jsonschema.exceptions.ValidationError:
             self._last_error_msg = f"Configuration file {filename} failed " + \
                 "to validate against expected schema.  Please check!"
             return None
 
-        raw_data = raw_json[schema.Elements.toplevel_page_store_api]
-        page_store_api = self._process_page_store_api(raw_data)
+        raw_settings = raw_json[schema.element_api]
+        api_settings = self._process_api_settings(raw_settings)
 
-        raw_data = raw_json[schema.Elements.toplevel_processing_queue_api]
-        processing_queue_api = self._process_processing_queue_api(raw_data)
+        raw_settings = raw_json[schema.element_big_broker]
+        big_broker_settings = self._process_big_broker_settings(raw_settings)
 
-        raw_data = raw_json[schema.Elements.toplevel_big_broker_api]
-        big_broker_api = self._process_big_broker_api(raw_data)
+        raw_settings = raw_json[schema.element_page_store]
+        page_store_settings = self._process_page_store_settings(raw_settings)
 
-        return Configuration(page_store_api, processing_queue_api,
-                             big_broker_api)
+        raw_settings = raw_json[schema.element_processing_queue]
+        processing_queue_settings = self._process_processing_queue_settings(raw_settings)
 
-    def _process_page_store_api(self, settings) -> PageStoreApi:
-        """!@brief Parse the Page Store Api settings.
+        return Configuration(api_settings, big_broker_settings,
+                             page_store_settings, processing_queue_settings)
+
+    def _process_api_settings(self, settings) -> ApiSettings:
+        """!@brief Parse the Big Broker Api settings.
         @param self The object pointer.
         @param settings Raw JSON data.
-        @returns PageStoreApiSettings.
+        @returns ApiSettings.
         """
         #pylint: disable=no-self-use
 
-        host = settings[schema.Elements.page_store_api_host]
-        port = settings[schema.Elements.page_store_api_port]
-        auth_key = settings[schema.Elements.page_store_api_auth_key]
+        auth_key = settings[CommonConfigurationKey.api_auth_key]
+        public_key_file = settings[CommonConfigurationKey.public_key_filename]
 
-        return PageStoreApi(host, port, auth_key)
+        return ApiSettings(auth_key, public_key_file)
 
-    def _process_processing_queue_api(self, settings) -> ProcessingQueueApi:
+    def _process_big_broker_settings(self, settings) -> BigBrokerApi:
+        """!@brief Process the big broker api settings section.
+        @param self The object pointer.
+        @param settings Raw JSON to process.
+        @returns BigBrokerApi.
+        """
+        #pylint: disable=no-self-use
+
+        auth_key = settings[CommonConfigurationKey.api_auth_key]
+        api_endpoint = settings[CommonConfigurationKey.api_endpoint]
+
+        return BigBrokerApi(auth_key, api_endpoint)
+
+    def _process_page_store_settings(self, settings) -> PageStoreApi:
+        """!@brief Process the page store api settings section.
+        @param self The object pointer.
+        @param settings Raw JSON to process.
+        @returns PageStoreApi.
+        """
+        #pylint: disable=no-self-use
+
+        auth_key = settings[CommonConfigurationKey.api_auth_key]
+        api_endpoint = settings[CommonConfigurationKey.api_endpoint]
+
+        return PageStoreApi(auth_key, api_endpoint)
+
+    def _process_processing_queue_settings(self, settings) -> ProcessingQueueApi:
         """!@brief Parse the Processing Queue Api settings.
         @param self The object pointer.
         @param settings Raw JSON data.
@@ -110,21 +140,7 @@ class ConfigurationManager:
         """
         #pylint: disable=no-self-use
 
-        host = settings[schema.Elements.processing_queue_api_host]
-        port = settings[schema.Elements.processing_queue_api_port]
-        auth_key = settings[schema.Elements.processing_queue_api_auth_key]
+        auth_key = settings[CommonConfigurationKey.api_auth_key]
+        api_endpoint = settings[CommonConfigurationKey.api_endpoint]
 
-        return ProcessingQueueApi(host, port, auth_key)
-
-    def _process_big_broker_api(self, settings) -> BigBrokerApiSettings:
-        """!@brief Parse the Big Broker Api settings.
-        @param self The object pointer.
-        @param settings Raw JSON data.
-        @returns BigBrokerApiSettings.
-        """
-        #pylint: disable=no-self-use
-
-        auth_key = settings[schema.Elements.processing_queue_api_auth_key]
-        private_key = settings[schema.Elements.big_broker_api_private_key]
-
-        return BigBrokerApiSettings(auth_key, private_key)
+        return ProcessingQueueApi(auth_key, api_endpoint)

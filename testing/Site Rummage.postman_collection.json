@@ -29,12 +29,10 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:2020/webpage/add",
-							"protocol": "http",
+							"raw": "{{PAGE_STORE_URL}}/webpage/add",
 							"host": [
-								"localhost"
+								"{{PAGE_STORE_URL}}"
 							],
-							"port": "2020",
 							"path": [
 								"webpage",
 								"add"
@@ -91,12 +89,10 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:2020/health/ping",
-							"protocol": "http",
+							"raw": "{{PAGE_STORE_URL}}/health/ping",
 							"host": [
-								"localhost"
+								"{{PAGE_STORE_URL}}"
 							],
-							"port": "2020",
 							"path": [
 								"health",
 								"ping"
@@ -117,12 +113,10 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:2020/health/status",
-							"protocol": "http",
+							"raw": "{{PAGE_STORE_URL}}/health/status",
 							"host": [
-								"localhost"
+								"{{PAGE_STORE_URL}}"
 							],
-							"port": "2020",
 							"path": [
 								"health",
 								"status"
@@ -138,77 +132,116 @@
 			"name": "Big Broker",
 			"item": [
 				{
-					"name": "Add Scrape Node",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "AuthKey",
-								"type": "text",
-								"value": "BigBroker2021"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"identifier\": \"0X0DEAD\",\n    \"host\": \"127.0.0.1\",\n    \"port\": 3232\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+					"name": "Task",
+					"item": [
+						{
+							"name": "Complete Task",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "AuthKey",
+										"type": "text",
+										"value": "BigBroker2021"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"task_id\": \"0X0DEAD\",\n    \"is_successful\": true\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BIG_BROKER_URL}}/task/complete_task",
+									"host": [
+										"{{BIG_BROKER_URL}}"
+									],
+									"path": [
+										"task",
+										"complete_task"
+									]
 								}
-							}
-						},
-						"url": {
-							"raw": "http://localhost:3232/nodemanager/add",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "3232",
-							"path": [
-								"nodemanager",
-								"add"
-							]
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
 				},
 				{
-					"name": "Get All Registered Scrape Nodes",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "AuthKey",
-								"type": "text",
-								"value": "BigBroker2021"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"identifier\": \"0X0DEAD\",\n    \"host\": \"127.0.0.1\",\n    \"port\": 3232\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+					"name": "Node Management",
+					"item": [
+						{
+							"name": "Get All Registered Scrape Nodes",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "AuthKey",
+										"type": "text",
+										"value": "BigBroker2021"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"identifier\": \"0X0DEAD\",\n    \"host\": \"127.0.0.1\",\n    \"port\": 3232\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BIG_BROKER_URL}}/nodemanager/list",
+									"host": [
+										"{{BIG_BROKER_URL}}"
+									],
+									"path": [
+										"nodemanager",
+										"list"
+									]
 								}
-							}
+							},
+							"response": []
 						},
-						"url": {
-							"raw": "http://localhost:3232/nodemanager/list",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "3232",
-							"path": [
-								"nodemanager",
-								"list"
-							]
+						{
+							"name": "Add Scrape Node",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "AuthKey",
+										"type": "text",
+										"value": "BigBroker2021"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"identifier\": \"0X0DEAD\",\n    \"host\": \"127.0.0.1\",\n    \"port\": 3232\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BIG_BROKER_URL}}/nodemanager/add",
+									"host": [
+										"{{BIG_BROKER_URL}}"
+									],
+									"path": [
+										"nodemanager",
+										"add"
+									]
+								}
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
 				}
 			]
 		},
@@ -279,6 +312,44 @@
 							"path": [
 								"queue",
 								"add"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Scrape Node",
+			"item": [
+				{
+					"name": "New Scrape Task",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AuthKey",
+								"type": "text",
+								"value": "noPassword"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://tesco.com\",\n    \"task_type\": \"new\",\n    \"task_id\": \"0x0dead\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SCRAPE_NODE_URL}}/job/new_job",
+							"host": [
+								"{{SCRAPE_NODE_URL}}"
+							],
+							"path": [
+								"job",
+								"new_job"
 							]
 						}
 					},

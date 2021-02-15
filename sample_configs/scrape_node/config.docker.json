@@ -1,0 +1,22 @@
+{
+    "big broker api":
+    {
+        "api_endpoint": "http://big-broker.rummage.internal:3232",
+        "auth_key": "BigBroker2021"
+    },
+    "page store api":
+    {
+        "api_endpoint": "http://page-store.rummage.internal:2020",
+        "auth_key": "TesTKeY2021"
+    },
+    "processing queue api":
+    {
+        "api_endpoint": "http://processing-queue.rummage.internal:4040",
+        "auth_key": "ProcessingQueue2021"
+    },
+    "api settings":
+    {
+        "auth_key": "scraperKey",
+        "public_key_file": "public_key.pem"
+    }
+}
