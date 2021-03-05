@@ -17,6 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 class CommonConfigurationKey:
 
+    ## Private key filename (e.g. 'private_key.pem').
+    private_key_filename = 'private_key_file'
+
     ## Public key filename (e.g. 'public_key.pem').
     public_key_filename = 'public_key_file'
 

@@ -76,3 +76,12 @@ class ScrapedPage:
         self._page_hash = page_hash
         self._title = title
         self._url_path = url_path
+
+    def build_json(self) -> dict:
+        return {
+            'description': self._description,
+            'domain': self._domain,
+            'hash': self.page_hash,
+            'title': self._title,
+            'url': self._url_path
+        }

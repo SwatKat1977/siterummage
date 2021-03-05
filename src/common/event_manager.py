@@ -133,6 +133,34 @@ class EventManager:
 
             return
 
+    def process_next_event_sync(self) -> None:
+        """!@brief Process the next event, if any exists.  An error will be
+                   generated if the event ID is invalid (should never happen).
+        @param self The object pointer.
+        @returns True - None.
+        """
+
+        # If nothing is ready for processing just return success (True).
+        if not self._events:
+            return
+
+        for idx, event in enumerate(self._events):
+            now = round(time.time() * 1000)
+
+            if event.trigger_time and now < event.trigger_time:
+                continue
+
+            #  Call the event processing function, this is defined by the
+            #  registered callback function.
+            self._event_handlers[event.event_id](event)
+
+            #  Once the event has been handled, delete it.. The event handler
+            # function should deal with issues with the event and therefore
+            #  deleting should be safe.
+            self._events.pop(idx)
+
+            return
+
     def delete_all_events(self) -> None:
         """!@brief Delete all events.
         @param self The object pointer.

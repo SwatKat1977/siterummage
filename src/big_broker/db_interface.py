@@ -15,6 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 import os
+import time
+from uuid import uuid1
 import sqlite3
 
 class DbInterface:
@@ -31,6 +33,7 @@ class DbInterface:
             url text NOT NULL,
             insertion_date integer NOT NULL,
             cached boolean DEFAULT false,
+            task_id varchar(36) NOT NULL,
             link_type integer NOT NULL
         )
     """
@@ -216,6 +219,32 @@ class DbInterface:
 
         id_list = ','.join([str(id) for id in id_list])
         query = f"UPDATE url_queue SET cached = 1 WHERE id IN ({id_list})"
+        cursor = self._connection.cursor()
+
+        try:
+            cursor.execute(query)
+            self._connection.commit()
+
+        except sqlite3.Error as sqlite_except:
+            raise RuntimeError(f'Query failed, reason: {sqlite_except}') from \
+                sqlite_except
+
+    def add_url(self, url, task_type) -> None:
+        """!@brief Add a url to the processing queue database.
+        @param self The object pointer.
+        @param url URL to be processed.
+        @param task_type Task type e.g new or rescan.
+        @returns None
+        """
+
+        insert_time = round(time.time())
+        task_id = str(uuid1())
+        task_type_id = 0 if task_type == 'New' else 1
+
+        query = "INSERT INTO url_queue(url, insertion_date, cached, " + \
+            f"task_id, link_type) VALUES(\"{url}\", {insert_time}, 0, " + \
+            f"{task_id}\", {task_type_id})"
+
         cursor = self._connection.cursor()
 
         try:

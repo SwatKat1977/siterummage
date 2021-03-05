@@ -18,9 +18,9 @@ import json
 from typing import Union
 import jsonschema
 from common.common_configuration_key import CommonConfigurationKey
-from .configuration import ApiSettings, BigBrokerApi, Configuration, \
-                           PageStoreApi, ProcessingQueueApi
-from .configuration_schema import ConfigurationSchema as schema
+from configuration import ApiSettings, BigBrokerApi, Configuration, \
+                          PageStoreApi
+from configuration_schema import ConfigurationSchema as schema
 
 class ConfigurationManager:
     """ Class that manages (reads) the main JSON configuration file. """
@@ -87,11 +87,8 @@ class ConfigurationManager:
         raw_settings = raw_json[schema.element_page_store]
         page_store_settings = self._process_page_store_settings(raw_settings)
 
-        raw_settings = raw_json[schema.element_processing_queue]
-        processing_queue_settings = self._process_processing_queue_settings(raw_settings)
-
         return Configuration(api_settings, big_broker_settings,
-                             page_store_settings, processing_queue_settings)
+                             page_store_settings)
 
     def _process_api_settings(self, settings) -> ApiSettings:
         """!@brief Parse the Big Broker Api settings.
@@ -102,9 +99,9 @@ class ConfigurationManager:
         #pylint: disable=no-self-use
 
         auth_key = settings[CommonConfigurationKey.api_auth_key]
-        public_key_file = settings[CommonConfigurationKey.public_key_filename]
-
-        return ApiSettings(auth_key, public_key_file)
+        private_key = settings[CommonConfigurationKey.private_key_filename]
+        public_key = settings[CommonConfigurationKey.public_key_filename]
+        return ApiSettings(auth_key, private_key, public_key)
 
     def _process_big_broker_settings(self, settings) -> BigBrokerApi:
         """!@brief Process the big broker api settings section.
@@ -116,7 +113,6 @@ class ConfigurationManager:
 
         auth_key = settings[CommonConfigurationKey.api_auth_key]
         api_endpoint = settings[CommonConfigurationKey.api_endpoint]
-
         return BigBrokerApi(auth_key, api_endpoint)
 
     def _process_page_store_settings(self, settings) -> PageStoreApi:
@@ -129,18 +125,4 @@ class ConfigurationManager:
 
         auth_key = settings[CommonConfigurationKey.api_auth_key]
         api_endpoint = settings[CommonConfigurationKey.api_endpoint]
-
         return PageStoreApi(auth_key, api_endpoint)
-
-    def _process_processing_queue_settings(self, settings) -> ProcessingQueueApi:
-        """!@brief Parse the Processing Queue Api settings.
-        @param self The object pointer.
-        @param settings Raw JSON data.
-        @returns PageStoreApiSettings.
-        """
-        #pylint: disable=no-self-use
-
-        auth_key = settings[CommonConfigurationKey.api_auth_key]
-        api_endpoint = settings[CommonConfigurationKey.api_endpoint]
-
-        return ProcessingQueueApi(auth_key, api_endpoint)

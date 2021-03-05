@@ -1,4 +1,4 @@
-export QUART_APP=scrape_node
 export SITERUMMAGE_SCRAPENODE_CONFIG=../sample_configs/scrape_node/config.json
+export SITERUMMAGE_SCRAPENODE_MESSAGING_CONFIG=../sample_configs/scrape_node/messaging_queue.json
 export SITERUMMAGE_SCRAPENODE_PORT=9090
-python -m quart run -p $SITERUMMAGE_SCRAPENODE_PORT
+python scrape_node/scrape_node.py

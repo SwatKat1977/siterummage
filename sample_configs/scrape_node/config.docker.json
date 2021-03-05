@@ -9,14 +9,10 @@
         "api_endpoint": "http://page-store.rummage.internal:2020",
         "auth_key": "TesTKeY2021"
     },
-    "processing queue api":
-    {
-        "api_endpoint": "http://processing-queue.rummage.internal:4040",
-        "auth_key": "ProcessingQueue2021"
-    },
     "api settings":
     {
         "auth_key": "scraperKey",
+        "private_key_file": "private_key.pem",
         "public_key_file": "public_key.pem"
     }
 }

@@ -20,18 +20,17 @@ from common.logger import LogType
 
 class QueueCache:
     __slots__ = ['_config', '_db_interface', '_logger', '_lock',
-                 '_processing_queue', '_queue_cache']
+                 '_queue_cache']
 
     @property
     def size_all_queue(self):
-        return len(self.queue_size)
+        return len(self._queue_cache)
 
-    def __init__(self, db_interface, configuration, logger, processing_queue):
+    def __init__(self, db_interface, configuration, logger):
         self._config = configuration
         self._db_interface = db_interface
         self._logger = logger
         self._queue_cache = []
-        self._processing_queue = processing_queue
         self._lock = threading.Lock()
 
         self._logger.log(LogType.Info, 'Caching processing queue...')
@@ -86,14 +85,3 @@ class QueueCache:
         self._db_interface.set_ids_to_cached(id_list)
 
         return entry_count, cached_count
-
-    def pop_to_processing(self):
-
-        with self._lock:
-            try:
-                cached_entry = self._queue_cache.pop(0)
-            except IndexError:
-                return None
-
-            self._processing_queue.add_url(cached_entry)
-            return cached_entry

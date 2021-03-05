@@ -14,38 +14,31 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
+from common.common_configuration_key import CommonConfigurationKey
 
 class ConfigurationSchema:
     ''' Definition of the configuration files JSON Schema'''
     #pylint: disable=too-few-public-methods
 
-    class Elements:
-        ''' Definition of the configuration files JSON elements'''
-        #pylint: disable=too-few-public-methods
 
-        # -- Top-level json elements --
-        toplevel_page_store_api = 'page store api'
-        toplevel_processing_queue_api = 'processing queue api'
-        toplevel_big_broker_api = 'api settings'
+    # -- Top-level json elements --
+    element_page_store_api = 'page store api'
+    element_big_broker_api = 'api settings'
+    element_database_settings = 'database settings'
+    element_message_service = 'message service'
 
-        # -- Page Store Api sub-elements --
-        # ---------------------------------
-        page_store_api_host = 'host'
-        page_store_api_port = 'port'
-        page_store_api_auth_key = 'auth key'
+    # -- Page Store Api sub-elements --
+    # ---------------------------------
+    page_store_api_host = 'host'
+    page_store_api_port = 'port'
 
-        # -- Processing Queue Api sub-elements --
-        # ---------------------------------------
-        processing_queue_api_host = 'host'
-        processing_queue_api_port = 'port'
-        processing_queue_api_auth_key = 'auth key'
+    # -- Database Settings sub-elements --
+    # -------------------------------------
+    db_settings_cache_size = 'cache size'
+    db_settings_database_file = 'database file'
+    db_settings_fail_on_no_database = 'fail on no database'
 
-        # -- Big Broker Api sub-elements --
-        # ---------------------------------
-        big_broker_api_auth_key = 'auth key'
-        big_broker_api_private_key = 'private key file'
-
-    json_schema = \
+    schema = \
     {
         "$schema": "http://json-schema.org/draft-07/schema#",
 
@@ -54,7 +47,7 @@ class ConfigurationSchema:
 
         "properties":
         {
-            'page store api':
+            element_page_store_api:
             {
                 "additionalProperties" : False,
                 "properties":
@@ -68,50 +61,60 @@ class ConfigurationSchema:
                         "type" : "integer",
                         "minimum": 1
                     },
-                    'auth key':
+                    CommonConfigurationKey.api_auth_key:
                     {
                         "type" : "string"
                     }
                 },
-                "required" : ['host', 'port', 'auth key']
+                "required" : ['host', 'port',
+                              CommonConfigurationKey.api_auth_key]
             },
-            'processing queue api':
+            element_big_broker_api:
             {
                 "additionalProperties" : False,
                 "properties":
                 {
-                    'host':
+                    CommonConfigurationKey.api_auth_key:
                     {
                         "type" : "string"
                     },
-                    'port':
+                    CommonConfigurationKey.public_key_filename:
+                    {
+                        "type" : "string"
+                    },
+                    CommonConfigurationKey.private_key_filename:
+                    {
+                        "type" : "string"
+                    }
+                },
+                "required" : [CommonConfigurationKey.api_auth_key,
+                              CommonConfigurationKey.public_key_filename,
+                              CommonConfigurationKey.private_key_filename]
+            },
+            element_database_settings:
+            {
+                "additionalProperties" : False,
+                "properties":
+                {
+                    db_settings_cache_size:
                     {
                         "type" : "integer",
                         "minimum": 1
                     },
-                    'auth key':
-                    {
-                        "type" : "string"
-                    }
-                },
-                "required" : ['host', 'port', 'auth key']
-            },
-            'api settings':
-            {
-                "additionalProperties" : False,
-                "properties":
-                {
-                    'auth key':
+                    db_settings_database_file:
                     {
                         "type" : "string"
                     },
-                    'private key file':
+                    db_settings_fail_on_no_database:
                     {
-                        "type" : "string"
+                        "type": "boolean"
                     }
                 },
-                "required" : ['auth key', 'private key file']
+                "required" : [db_settings_cache_size,
+                              db_settings_database_file,
+                              db_settings_fail_on_no_database]
             }
         },
-        "required" : ['api settings', 'page store api', 'processing queue api']
+        "required" : [element_big_broker_api, element_page_store_api,
+                      element_database_settings]
     }

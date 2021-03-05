@@ -14,3 +14,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
+#pylint: disable=wrong-import-position
+import os
+import sys
+sys.path.insert(0, '.')
+from scrape_node_app import ScrapeNodeApp
+
+app = ScrapeNodeApp()
+
+if not os.getenv('SITERUMMAGE_SCRAPENODE_CONFIG'):
+    print('[ERROR] SITERUMMAGE_SCRAPENODE_CONFIG environment variable is' + \
+                      ' not defined!')
+    sys.exit(1)
+
+if not os.getenv('SITERUMMAGE_SCRAPENODE_MESSAGING_CONFIG'):
+    print('[ERROR] SITERUMMAGE_SCRAPENODE_MESSAGING_CONFIG environment' + \
+                      ' variable is not defined!')
+    sys.exit(1)
+
+if not app.initialise():
+    sys.exit()
+
+app.start()

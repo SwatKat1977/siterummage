@@ -16,18 +16,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 class NodeManagerAddRequest:
-    ''' Definition of the nodemanager/add JSON schema'''
+    ''' Definition of the nodemanager/add request '''
     #pylint: disable=too-few-public-methods
 
-    class Elements:
-        ''' Definition of the JSON elements'''
-        #pylint: disable=too-few-public-methods
+    identifier = 'identifier'
 
-        identifier = 'identifier'
-        host = 'host'
-        port = 'port'
-
-    Schema = \
+    schema = \
     {
         "$schema": "http://json-schema.org/draft-07/schema#",
 
@@ -36,21 +30,40 @@ class NodeManagerAddRequest:
 
         "properties":
         {
-            'identifier':
+            identifier:
             {
                 "type" : "string"
-            },
-            'host':
-            {
-                "type" : "string"
-            },
-            'port':
-            {
-                "type" : "integer",
-                "minimum": 1
             }
         },
-        "required" : ['identifier', 'host', 'port']
+        "required" : [identifier]
+    }
+
+class NodeManagerAddResponse:
+    ''' Definition of the nodemanager/add response '''
+    #pylint: disable=too-few-public-methods
+
+    queue_username = 'msg_queue_username'
+    queue_password = 'msg_queue_password'
+
+    schema = \
+    {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+
+        "type" : "object",
+        "additionalProperties" : False,
+
+        "properties":
+        {
+            queue_username:
+            {
+                "type" : "string"
+            },
+            queue_password:
+            {
+                "type" : "string"
+            }
+        },
+        "required" : [queue_username, queue_password]
     }
 
 NodeManagerListResponseSchema = {

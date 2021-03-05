@@ -17,8 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 from typing import Union
 import jsonschema
+from common.common_configuration_key import CommonConfigurationKey
 from .configuration import BigBrokerApiSettings, Configuration, PageStoreApi, \
-                           ProcessingQueueApi
+                           DatabaseSettings
 from .configuration_schema import ConfigurationSchema as schema
 
 class ConfigurationManager:
@@ -69,24 +70,23 @@ class ConfigurationManager:
             return None
 
         try:
-            jsonschema.validate(instance=raw_json, schema=schema.json_schema)
+            jsonschema.validate(instance=raw_json, schema=schema.schema)
 
         except jsonschema.exceptions.ValidationError:
             self._last_error_msg = f"Configuration file {filename} failed " + \
                 "to validate against expected schema.  Please check!"
             return None
 
-        raw_data = raw_json[schema.Elements.toplevel_page_store_api]
+        raw_data = raw_json[schema.element_page_store_api]
         page_store_api = self._process_page_store_api(raw_data)
 
-        raw_data = raw_json[schema.Elements.toplevel_processing_queue_api]
-        processing_queue_api = self._process_processing_queue_api(raw_data)
-
-        raw_data = raw_json[schema.Elements.toplevel_big_broker_api]
+        raw_data = raw_json[schema.element_big_broker_api]
         big_broker_api = self._process_big_broker_api(raw_data)
 
-        return Configuration(page_store_api, processing_queue_api,
-                             big_broker_api)
+        raw_db_settings = raw_json[schema.element_database_settings]
+        db_settings = self._process_db_settings(raw_db_settings)
+
+        return Configuration(page_store_api, big_broker_api, db_settings)
 
     def _process_page_store_api(self, settings) -> PageStoreApi:
         """!@brief Parse the Page Store Api settings.
@@ -96,25 +96,11 @@ class ConfigurationManager:
         """
         #pylint: disable=no-self-use
 
-        host = settings[schema.Elements.page_store_api_host]
-        port = settings[schema.Elements.page_store_api_port]
-        auth_key = settings[schema.Elements.page_store_api_auth_key]
+        host = settings[schema.page_store_api_host]
+        port = settings[schema.page_store_api_port]
+        auth_key = settings[CommonConfigurationKey.api_auth_key]
 
         return PageStoreApi(host, port, auth_key)
-
-    def _process_processing_queue_api(self, settings) -> ProcessingQueueApi:
-        """!@brief Parse the Processing Queue Api settings.
-        @param self The object pointer.
-        @param settings Raw JSON data.
-        @returns PageStoreApiSettings.
-        """
-        #pylint: disable=no-self-use
-
-        host = settings[schema.Elements.processing_queue_api_host]
-        port = settings[schema.Elements.processing_queue_api_port]
-        auth_key = settings[schema.Elements.processing_queue_api_auth_key]
-
-        return ProcessingQueueApi(host, port, auth_key)
 
     def _process_big_broker_api(self, settings) -> BigBrokerApiSettings:
         """!@brief Parse the Big Broker Api settings.
@@ -124,7 +110,21 @@ class ConfigurationManager:
         """
         #pylint: disable=no-self-use
 
-        auth_key = settings[schema.Elements.processing_queue_api_auth_key]
-        private_key = settings[schema.Elements.big_broker_api_private_key]
+        auth_key = settings[CommonConfigurationKey.api_auth_key]
+        private_key = settings[CommonConfigurationKey.private_key_filename]
+        public_key = settings[CommonConfigurationKey.public_key_filename]
 
-        return BigBrokerApiSettings(auth_key, private_key)
+        return BigBrokerApiSettings(auth_key, private_key, public_key)
+
+    def _process_db_settings(self, settings) -> DatabaseSettings:
+        """!@brief Process the database settings section.
+        @param self The object pointer.
+        @param settings Raw JSON to process.
+        @returns DatabaseSettings.
+        """
+        #pylint: disable=no-self-use
+
+        cache_size = settings[schema.db_settings_cache_size]
+        db_filename = settings[schema.db_settings_database_file]
+        fail_no_db = settings[schema.db_settings_fail_on_no_database]
+        return DatabaseSettings(cache_size, db_filename, fail_no_db)

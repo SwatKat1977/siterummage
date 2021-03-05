@@ -15,13 +15,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 import hashlib
+from typing import Tuple
 import requests
 from lxml import html, etree
 from common.event import Event
 from common.http_status_code import HTTPStatusCode
+from common.logger import LogType
 from common.url_utils import UrlUtils
-from scrape_node.event_id import EventID
-from .scraped_page_builder import ScrapedPageBuilder
+from event_id import EventID
+from scraped_page_builder import ScrapedPageBuilder
 
 class PageScraper:
     ''' Class that emcompasses getting a page and scraping it '''
@@ -56,7 +58,7 @@ class PageScraper:
         self._task_type = None
         self._task_id = None
 
-    def scrape_page(self, url, task_type, task_id) -> None:
+    def scrape_page(self, url, task_type, task_id) -> Tuple[list, dict]:
         """!@brief Take a url and attempt to scrape meta data and links from it.
         @param self The object pointer.
         @param url URL to read.
@@ -74,20 +76,17 @@ class PageScraper:
 
         url_details = UrlUtils.split_url_into_domain_and_page(url)
 
+        self._page_builder.reset()
+
         page = self._read_page(url)
         if not page:
-
             self._url_being_processed = None
 
-            if task_type == 'new':
-                return
-
+            self._logger.log(LogType.Info, f"URL '{url}' is unreachable")
             page_details = self._page_builder.set_hash('0X0DEAD').\
                 set_domain(url_details['domain']).\
                 set_url_path(url_details['url_path']).build()
-            self._queue_store_results(page_details, [], False, task_type,
-                                      task_id)
-            return
+            return [], self._generate_results(page_details, False, task_id)
 
         html_tree = html.fromstring(page.content)
         page_contents = etree.tostring(html_tree)
@@ -104,22 +103,23 @@ class PageScraper:
                     if 'content' in child.attrib:
                         description = child.attrib['content']
 
-        print(f'Title:       {title}')
-        print(f"Description: {description}")
-        print(f"MD5 Hash:    {page_hash}")
-        print(f"Domain:      {url_details['domain']}")
-        print(f"url path:    {url_details['url_path']}")
+        self._logger.log(LogType.Info, '----- Scraped Page Information -----')
+        self._logger.log(LogType.Info, f'Title:       {title}')
+        self._logger.log(LogType.Info, f'Description: {description}')
+        self._logger.log(LogType.Info, f"MD5 Hash:    {page_hash}")
+        self._logger.log(LogType.Info, f"Domain:      {url_details['domain']}")
+        self._logger.log(LogType.Info, f"url path:    {url_details['url_path']}")
 
         links = self._extract_links_from_page(html_tree)
-        print(f'Total links: {len(links)}')
+        self._logger.log(LogType.Info, f'Total links: {len(links)}')
+        self._logger.log(LogType.Info, '------------------------------------')
 
         self._url_being_processed = None
 
         page_details = self._page_builder.set_description(description). \
             set_domain(url_details['domain']).set_hash(page_hash). \
             set_title(title).set_url_path(url_details['url_path']).build()
-        self._queue_store_results(page_details, links, True, task_type,
-                                  task_id)
+        return links, self._generate_results(page_details, True, task_id)
 
     def _read_page(self, url) -> requests.models.Response:
         """!@brief Attempt to read a webpage by making a get on the page, on a
@@ -130,7 +130,8 @@ class PageScraper:
         """
 
         try:
-            page = requests.get(url, headers = self._user_agent)
+            page = requests.get(url, headers = self._user_agent,
+            timeout=(2, 2))
 
         except requests.exceptions.ConnectionError:
             return None
@@ -151,20 +152,18 @@ class PageScraper:
         all_links = list(dict.fromkeys(all_links))
 
         # Remove interal links and other invalid paths.
+        all_links = [link for link in all_links if len(link)]
         all_links = [link for link in all_links if link[0] != '#' and link[0] != '/']
-
         return all_links
 
-    def _queue_store_results(self, page_details, links, success, task_type,
-                             task_id):
+    ##def results = self._generate_results(page_details, False, task_id)
+    def _generate_results(self, details, success, task_id):
         #pylint: disable=too-many-arguments
 
         send_event_body = {
-            'details': page_details,
-            'links': links,
+            'details': details.build_json(),
             'success': success,
-            'task_type': task_type,
             'task_id': task_id
         }
-        store_results_event = Event(EventID.StoreResults, send_event_body)
-        self._event_manager.queue_event(store_results_event)
+
+        return send_event_body

@@ -26,6 +26,7 @@ jobs:
         pip install pycryptodome
         pip install requests
         pip install lxml
+        pip install pika
         pip install quart
     - name: Run Pylint
       run: |

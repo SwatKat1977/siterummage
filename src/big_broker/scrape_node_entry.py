@@ -17,7 +17,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 class ScrapeNodeEntry:
     """ Class that encapsulates details for a scrape node """
-    __slots__ = ['_identifier', '_host', '_port']
+    #pylint: disable=too-few-public-methods
+    __slots__ = ['_identifier']
 
     @property
     def identifier(self) -> str:
@@ -27,23 +28,5 @@ class ScrapeNodeEntry:
         """
         return self._identifier
 
-    @property
-    def host(self) -> str:
-        """!@brief Node hostname or IP address (Getter).
-        @param self The object pointer.
-        @returns string.
-        """
-        return self._host
-
-    @property
-    def port(self) -> int:
-        """!@brief Node hostname network port (Getter).
-        @param self The object pointer.
-        @returns int.
-        """
-        return self._port
-
-    def __init__(self, identifier, host, port):
+    def __init__(self, identifier):
         self._identifier = identifier
-        self._host = host
-        self._port = port

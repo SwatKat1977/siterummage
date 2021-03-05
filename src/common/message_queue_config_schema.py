@@ -14,29 +14,29 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
-from common.common_configuration_key import CommonConfigurationKey
-
 class ConfigurationSchema:
-    ''' Definition of the configuration files JSON Schema'''
+    ''' Definition of the message queue configuration file JSON Schema'''
     #pylint: disable=too-few-public-methods
 
     # -- Top-level json elements --
-    element_api = 'api settings'
-    element_big_broker = 'big broker api'
-    element_page_store = 'page store api'
+    element_connection = 'connection'
+    element_queue_consumer = 'consumer queue'
+    element_queue_producers = 'producer queues'
 
-    # -- Queue sub-elements --
-    # -------------------------
-    queue_entry_name = 'queue name'
+    # -- Queue Entry definition --
+    queue_entry_name = 'name'
     queue_entry_is_durable = 'is durable'
 
     # -- Messaging Service sub-elements --
-    # -------------------------------------
-    messaging_service_username = 'service username'
-    messaging_service_password = 'service password'
-    messaging_service_host = 'service host'
-    messaging_service_consumer_queue = 'consumer queue'
-    messaging_service_consumer_queue_is_durable = 'consumer queue is durable'
+    connection_username = 'username'
+    connection_password = 'password'
+    connection_queue_host = 'queue host'
+
+    # -- Messaging Consumer sub-elements --
+    queue_consumer_queue = 'queue'
+
+    # -- Messaging Producers sub-elements --
+    queue_producers_queues = 'queues'
 
     schema = \
     {
@@ -64,67 +64,56 @@ class ConfigurationSchema:
             }
         },
 
-        "type" : "object",
+        "type": "object",
         "additionalProperties" : False,
-
         "properties":
         {
-            element_page_store:
+            element_connection:
             {
                 "additionalProperties" : False,
                 "properties":
                 {
-                    CommonConfigurationKey.api_endpoint:
+                    connection_username:
                     {
                         "type" : "string"
                     },
-                    CommonConfigurationKey.api_auth_key:
+                    connection_password:
+                    {
+                        "type" : "string"
+                    },
+
+                    connection_queue_host:
                     {
                         "type" : "string"
                     }
                 },
-                "required" : [CommonConfigurationKey.api_auth_key,
-                              CommonConfigurationKey.api_endpoint]
+                "required" : [connection_username,
+                              connection_password,
+                              connection_queue_host]
             },
-            element_big_broker:
+            element_queue_consumer:
             {
                 "additionalProperties" : False,
                 "properties":
                 {
-                    CommonConfigurationKey.api_endpoint:
-                    {
-                        "type" : "string"
-                    },
-                    CommonConfigurationKey.api_auth_key:
-                    {
-                        "type" : "string"
-                    }
+                    queue_consumer_queue: { "$ref": "#/definitions/queue_entry"}
                 },
-                "required" : [CommonConfigurationKey.api_auth_key,
-                              CommonConfigurationKey.api_endpoint]
+                "required" : [queue_consumer_queue]
             },
-            element_api:
+            element_queue_producers:
             {
                 "additionalProperties" : False,
                 "properties":
                 {
-                    CommonConfigurationKey.api_auth_key:
+                    queue_producers_queues:
                     {
-                        "type" : "string"
-                    },
-                    CommonConfigurationKey.private_key_filename:
-                    {
-                        "type" : "string"
-                    },
-                    CommonConfigurationKey.public_key_filename:
-                    {
-                        "type" : "string"
+                        "type": "array",
+                        "items": {"$ref": "#/definitions/queue_entry"},
+                        "default": []
                     }
                 },
-                "required" : [CommonConfigurationKey.api_auth_key,
-                              CommonConfigurationKey.private_key_filename,
-                              CommonConfigurationKey.public_key_filename]
+                "required" : [queue_producers_queues]
             }
         },
-        "required" : [element_api, element_page_store, element_big_broker]
+        "required" : [element_connection]
     }

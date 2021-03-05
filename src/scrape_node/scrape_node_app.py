@@ -14,43 +14,50 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
-import base64
 import json
 import os
-import socket
 import time
 from typing import Tuple
 import uuid
 import requests
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
+import jsonschema
+import common.api_contracts.big_broker.node_management as schemas
+from common.crypto_utils import CryptoUtils
 from common.event import Event
 from common.event_manager import EventManager
 from common.http_status_code import HTTPStatusCode
 from common.logger import Logger, LogType
+from common.message_queue_config_mananger import MessagingQueueConfigManager
+from common.messaging_queue_settings import MessagingQueueSettings, QueueEntry
 from common.mime_type import MIMEType
 from common.info import BUILD_NO, COPYRIGHT_TEXT, CORE_VERSION, LICENSE_TEXT
-from common.service_base import ServiceBase
-from .api.job import ApiJob
-from .configuration_manager import ConfigurationManager
-from .event_id import EventID
-from .page_scraper import PageScraper
+from configuration_manager import ConfigurationManager
+from event_id import EventID
+from page_scraper import PageScraper
+from scrape_node.worker_thread import WorkerThread
 
-class Service(ServiceBase):
-    """ Siterummage Scrape Node microservice class """
+class ScrapeNodeApp:
+    ''' Entrypoint wrapper class for the scrape node application '''
+    __slots__ = ['_configuration', '_crypto_utils', '_event_manager',
+                 '_is_initialised', '_logger', '_messaging_config',
+                 '_page_scraper', '_public_key',
+                 '_worker_thread', '_worker_thread_run_flag']
 
     ## Title text logged during initialisation.
     title_text = 'Site Rummagge Scrape Node'
 
-    def __init__(self, quart_instance):
-        """!@brief Scrape Node service class constructor.
+    @property
+    def is_initialised(self) -> bool:
+        """!@brief is_initialised property (getter).
         @param self The object pointer.
-        @param quart_instance Instance of the Quart application.
-        @returns Service instance.
+        @return True if is_initialised, else False.
         """
-        super().__init__()
+        return self._is_initialised
 
-        self._quart = quart_instance
+    def __init__(self):
+        """!@brief Default constructor.
+        @param self The object pointer.
+        """
 
         ## Instance of the logging wrapper class
         self._logger = Logger()
@@ -59,23 +66,40 @@ class Service(ServiceBase):
         self._is_initialised = False
 
         self._public_key = ''
-
-        self._server_id = str(uuid.uuid4())
-
-        self._api_job = None
-
         self._event_manager = EventManager()
-
         self._page_scraper = PageScraper(self._logger, self._event_manager)
-
         self._configuration = None
+        self._messaging_config = None
+        self._crypto_utils = None
+        self._worker_thread = None
 
-    def _initialise(self) -> bool:
-        """!@brief Override for the initialise service method.
+    def start(self) -> None:
+        """!@brief ** Overridable 'run' function **
+        Start the application.
         @param self The object pointer.
-        @returns Boolean to show if initialisation was successful or not.
+        @return None
         """
 
+        if not self._is_initialised:
+            raise RuntimeError('Not initialised')
+
+        try:
+            while True:
+                self._main_loop()
+                time.sleep(0.1)
+
+        except KeyboardInterrupt:
+            pass
+
+        # Perform any shutdown required.
+        self._shutdown()
+
+    def initialise(self) -> bool:
+        """!@brief Service initialisation function
+        Successful initialisation should set self._initialised to True.
+        @param self The object pointer.
+        @return True if initialise was successful, otherwise False.
+        """
         self._logger.write_to_console = True
         self._logger.initialise()
 
@@ -93,6 +117,16 @@ class Service(ServiceBase):
             self._logger.log(LogType.Error, config_mgr.last_error_msg)
             return False
 
+        messaging_config_mgr = MessagingQueueConfigManager()
+        queue_config_file = os.getenv('SITERUMMAGE_SCRAPENODE_MESSAGING_CONFIG')
+        self._logger.log(LogType.Info,
+                         f'Messaging config file: {queue_config_file}')
+        self._messaging_config = messaging_config_mgr.parse(queue_config_file)
+        if not self._messaging_config:
+            self._logger.log(LogType.Error,
+                             messaging_config_mgr.last_error_msg)
+            return False
+
         self._logger.log(LogType.Info, '+=== Configuration Settings ===+')
         self._logger.log(LogType.Info, '+==============================+')
         cfg = self._configuration.big_broker_api
@@ -102,77 +136,108 @@ class Service(ServiceBase):
         cfg = self._configuration.page_store_api
         self._logger.log(LogType.Info, '+== Page Store Api Settings :->')
         self._logger.log(LogType.Info, f'+= API Host : {cfg.api_endpoint}')
-        self._logger.log(LogType.Info, '+= Auth Key : REDACTED')
+        self._logger.log(LogType.Info, '+= Page Store Auth Key : ***')
         conf = self._configuration.api_settings
         self._logger.log(LogType.Info, '+== Api Settings :->')
         self._logger.log(LogType.Info,
-                         f'+= Public Key File : {conf.public_key_file}')
+                         f'+= Private Key File : {conf.private_key_file}')
         self._logger.log(LogType.Info,
-                          '+= Auth Key        : REDACTED')
-        cfg = self._configuration.processing_queue_api
-        self._logger.log(LogType.Info, '+== Processing Queue Api Settings :->')
-        self._logger.log(LogType.Info, f'+= API Host : {cfg.api_endpoint}')
-        self._logger.log(LogType.Info, '+= Auth Key : REDACTED')
+                         f'+= Public Key File  : {conf.public_key_file}')
+        self._logger.log(LogType.Info,
+                          '+= Auth Key         : ***')
         self._logger.log(LogType.Info, '+==============================+')
 
-        self._api_job = ApiJob(self._quart, self._logger, self._event_manager)
+        self._crypto_utils = CryptoUtils()
 
-        if not self._load_public_key():
+        public_key = self._configuration.api_settings.public_key_file
+        status, err = self._crypto_utils.load_public_key(public_key)
+        if not status:
+            self._logger.log(LogType.Critical, err)
             return False
 
-        status, err_msg = self._register_with_big_broken()
+        self._logger.log(LogType.Info, 'Public PKI key loaded...')
+
+        private_key = self._configuration.api_settings.private_key_file
+        status, err = self._crypto_utils.load_private_key(private_key)
         if not status:
-            self._logger.log(LogType.Critical,
-                             'Unable to register node with big broker, ' + \
-                                 f'reason: {err_msg}')
+            self._logger.log(LogType.Critical, err)
+            return False
+
+        self._logger.log(LogType.Info, 'Private PKI key loaded...')
+
+        try:
+            status, err_msg = self._register_with_big_broken()
+            if not status:
+                self._logger.log(LogType.Critical,
+                                'Unable to register node with big broker, ' + \
+                                    f'reason: {err_msg}')
+                return False
+
+        except KeyboardInterrupt:
+            self._shutdown()
             return False
 
         self._register_event_handlers()
+
+        self._create_message_queue_thread()
 
         self._is_initialised = True
 
         return True
 
-    async def _main_loop(self) -> None:
-        """!@brief Override for the main service method.
+    def shutdown(self) -> None:
+        """!@brief Wrap the overridable 'shutdown' function
         @param self The object pointer.
-        @returns None.
+        @return None
         """
+        return self._shutdown()
 
-        await self._event_manager.process_next_event()
+    def _create_message_queue_thread(self) -> None:
+
+        conn_settings = self._messaging_config.connection_settings
+        consumer_settings = self._messaging_config.consumer_settings
+        producers_settings = self._messaging_config.producers_settings
+
+        settings = MessagingQueueSettings()
+        settings.connection_settings.username = conn_settings.username
+        settings.connection_settings.password = conn_settings.password
+        settings.connection_settings.host = conn_settings.host
+        settings.queue_consumer_definition.queue.is_durable = \
+            consumer_settings.queue.is_durable
+        settings.queue_consumer_definition.queue.name = \
+            consumer_settings.queue.name
+
+        for producer in producers_settings.queues:
+            entry = QueueEntry()
+            entry.name = producer.name
+            entry.is_durable = producer.is_durable
+            settings.publishing_queues.add_queue(entry)
+
+        self._worker_thread = WorkerThread(settings, self._logger,
+                                           self._page_scraper)
+        self._worker_thread.start()
+
+    def _main_loop(self) -> None:
+        """!@brief Overridable 'main loop' function **
+        @param self The object pointer.
+        @return None
+        """
+        self._event_manager.process_next_event_sync()
+
 
     def _shutdown(self) -> None:
-        """!@brief Override for the shutdown service method.
+        """!@brief Overridable 'shutdown' function **
         @param self The object pointer.
-        @returns None.
+        @return None
         """
         self._logger.log(LogType.Info, 'Shutting down...')
 
-    def _load_public_key(self) -> bool:
-        """!@brief Attempt to load the public key used by Site Rummage.
-        @param self The object pointer.
-        @returns Boolean : True = success, False = failed.
-        """
+        if self._worker_thread:
+            self._logger.log(LogType.Info, '=> Stopping messaging service...')
+            self._worker_thread.stop()
+            self._worker_thread.join()
 
-        key_filename = self._configuration.api_settings.public_key_file
-
-        self._logger.log(LogType.Info, f"Loading public key '{key_filename}'")
-
-        try:
-            with open(key_filename, 'r') as file_handle:
-                file_contents = file_handle.read()
-
-        except FileNotFoundError as io_except:
-            err = f"Unable to read public key '{key_filename}', reason: " + \
-                str(io_except)
-            self._logger.log(LogType.Critical, err)
-            return False
-
-        self._public_key = RSA.import_key(file_contents)
-
-        self._logger.log(LogType.Info, "Public key Loaded...")
-
-        return True
+        self._logger.log(LogType.Info, 'Shutdown cleanup complete...')
 
     def _register_with_big_broken(self) -> Tuple[bool, str]:
         """!@brief Register the scraper node instance with Big Broker, this is
@@ -189,20 +254,10 @@ class Service(ServiceBase):
             'Content-type': MIMEType.JSON
         }
 
-        network_port = os.getenv('SITERUMMAGE_SCRAPENODE_PORT')
-        host = socket.gethostname()
+        ident_raw = str(uuid.uuid1())
+        identifier = self._crypto_utils.encrypt(ident_raw, encode_base64=True)
 
-        ident_raw = str.encode(f"NODE_{host}_{network_port}")
-        cipher = PKCS1_OAEP.new(key=self._public_key)
-        identifier = cipher.encrypt(ident_raw)
-        identifier = base64.b64encode(identifier)
-        identifier = identifier.decode('ascii')
-
-        body = {
-            "identifier": identifier,
-            "host": socket.gethostname(),
-            "port": int(os.getenv('SITERUMMAGE_SCRAPENODE_PORT'))
-        }
+        body = { "identifier": identifier }
 
         response = None
 
@@ -222,20 +277,29 @@ class Service(ServiceBase):
 
         status_code = response.status_code
 
-        if status_code == HTTPStatusCode.OK:
-            return True, ''
+        if status_code != HTTPStatusCode.OK:
+            return False, 'Bad node registration response status ' + \
+                f'({status_code}, error: {response.text}'
 
-        if status_code == HTTPStatusCode.NotFound:
-            return False, 'Bad API endpoint specified'
+        body = response.json()
 
-        if status_code == HTTPStatusCode.BadRequest:
-            return False, f'Bad request - {response.text}'
+        try:
+            jsonschema.validate(body, schemas.NodeManagerAddResponse.schema)
 
-        if status_code in [HTTPStatusCode.Unauthenticated,
-                           HTTPStatusCode.Forbidden]:
-            return False, 'API token invalid or missing!'
+        except jsonschema.exceptions.ValidationError:
+            return False, 'Unable to validate node registration response.'
 
-        return False, f'Status code {status_code}'
+        username, err = self._crypto_utils.decrypt(
+            body[schemas.NodeManagerAddResponse.queue_username], True)
+        if not username:
+            return False, f'Cannot decrypt username, reason: {err}'
+
+        password, err = self._crypto_utils.decrypt(
+            body[schemas.NodeManagerAddResponse.queue_password], True)
+        if not password:
+            return False, f'Cannot decrypt password, reason: {err}'
+
+        return True, ''
 
     def _register_event_handlers(self) -> None:
         """!@brief Register event and callback events.
@@ -246,10 +310,6 @@ class Service(ServiceBase):
         # =====================
         # == Register events ==
         # ======================
-
-        # Event: New scrape task.
-        self._event_manager.register_event(EventID.NewScrapeTask,
-                                           self._initiate_new_scrape_task)
 
         # Event: Store results.
         self._event_manager.register_event(EventID.StoreResults,
@@ -270,16 +330,6 @@ class Service(ServiceBase):
         # Register Callback event: Get url being processed.
         self._event_manager.register_callback_event(
             EventID.GetUrlBeingProcessed, self._handle_get_url_being_processed)
-
-    def _initiate_new_scrape_task(self, event):
-        body = event.body
-        url = body['url']
-        task_type = body['task_type']
-        task_id = body['task_id']
-
-        self._logger.log(LogType.Info,
-                         f'Initiated new scrape task for url {url}')
-        self._page_scraper.scrape_page(url, task_type, task_id)
 
     def _handle_get_url_being_processed(self, event):
         #pylint: disable=unused-argument

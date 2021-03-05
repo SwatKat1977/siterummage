@@ -14,7 +14,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
-import base64
 import json
 from Crypto.Cipher import PKCS1_OAEP
 from quart import request
@@ -26,18 +25,18 @@ from common.mime_type import MIMEType
 from ..scrape_node_entry import ScrapeNodeEntry
 
 class ApiNodeManagement:
-    __slots__ = ['_configuration', '_interface', '_logger', '_private_key',
-                 '_scrape_node_list']
+    __slots__ = ['_configuration', '_cipher', '_crypto_utils', '_interface',
+                 '_logger', '_private_key', '_scrape_node_list']
 
     header_auth_key = 'AuthKey'
 
     def __init__(self, interface_instance, configuration, scrape_node_list,
-                 logger, private_key):
+                 logger, crypto_utils):
         self._interface = interface_instance
         self._configuration = configuration
         self._scrape_node_list = scrape_node_list
         self._logger = logger
-        self._private_key = private_key
+        self._crypto_utils = crypto_utils
 
         # Add route : /nodemanager/add
         self._interface.add_url_rule('/nodemanager/add',
@@ -65,63 +64,54 @@ class ApiNodeManagement:
                 status=validate_return, mimetype=MIMEType.Text)
 
         obj_instance, err_msg = await ApiUtils.convert_json_body_to_object(
-            request, schemas.NodeManagerAddRequest.Schema)
+            request, schemas.NodeManagerAddRequest.schema)
 
         if not obj_instance:
             return self._interface.response_class(
                 response=err_msg, status=HTTPStatusCode.BadRequest,
                 mimetype=MIMEType.Text)
 
-        try:
-            identifier = base64.b64decode(obj_instance.identifier)
-        except Exception:
-            return self._interface.response_class(
-                response='Bad identifier', status=HTTPStatusCode.BadRequest,
-                mimetype=MIMEType.Text)
-
-        decryptor = PKCS1_OAEP.new(key=self._private_key)
-
-        try:
-            identifier = decryptor.decrypt(identifier)
-        
-        except ValueError:
-            return self._interface.response_class(
-                response='Invalid crypto key',
-                status=HTTPStatusCode.BadRequest, mimetype=MIMEType.Text)
-
-        hostname = obj_instance.host
-        network_port = obj_instance.port
-        expected_ident = str.encode(f"NODE_{hostname}_{network_port}")
- 
-        if identifier != expected_ident:
-            return self._interface.response_class(
-                response='Invalid crypto key',
+        identifier, err = self._crypto_utils.decrypt(obj_instance.identifier,
+                                                     decode_base64=True)
+        if not identifier:
+            return self._interface.response_class(response=err,
                 status=HTTPStatusCode.BadRequest, mimetype=MIMEType.Text)
 
         decoded_ident = identifier.decode("utf-8")
+
+        self._logger.log(LogType.Info,
+                         f"Registering node identifier {decoded_ident} " + \
+                         f"from {request.remote_addr}")
+
+        response = {
+            schemas.NodeManagerAddResponse.queue_username:
+                self._crypto_utils.encrypt('siterummage', True),
+            schemas.NodeManagerAddResponse.queue_password:
+                self._crypto_utils.encrypt('FVECLGusm4W4Psjc', True)
+        }
+
         if self._scrape_node_list.node_exists(identifier):
 
             msg = f"Scrape node '{decoded_ident}' was re-registered"
             self._logger.log(LogType.Info, msg)
             return self._interface.response_class(
-                response='Node identifier alreedy registered',
-                status=HTTPStatusCode.OK, mimetype=MIMEType.Text)
+                response=json.dumps(response), status=HTTPStatusCode.OK,
+                mimetype=MIMEType.JSON)
 
-        node_entry = ScrapeNodeEntry(identifier, obj_instance.host,
-                                     obj_instance.port)
+        node_entry = ScrapeNodeEntry(identifier)
 
         if not self._scrape_node_list.add_node(identifier, node_entry):
             msg = f"Scrape node '{decoded_ident}' was re-registered"
             self._logger.log(LogType.Info, msg)
             return self._interface.response_class(
-                response= 'Node identifier alreedy registered',
-                status=HTTPStatusCode.OK, mimetype=MIMEType.Text)
+                response=json.dumps(response), status=HTTPStatusCode.OK,
+                mimetype=MIMEType.JSON)
 
         msg = f"Scrape node '{decoded_ident}' has been registered"
         self._logger.log(LogType.Info, msg)
 
-        return self._interface.response_class(response='Node registerd',
-            status=HTTPStatusCode.OK, mimetype=MIMEType.Text)
+        return self._interface.response_class(response=json.dumps(response),
+                status=HTTPStatusCode.OK, mimetype=MIMEType.JSON)
 
     async def _list_scrape_node(self) -> None:
         """!@brief Implementation of the /nodemanager/list endpoint.

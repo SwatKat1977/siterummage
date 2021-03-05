@@ -27,6 +27,14 @@ class ServiceBase:
         """
         return self._shutdown_completed
 
+    @property
+    def is_initialised(self) -> bool:
+        """!@brief is_initialised property (getter).
+        @param self The object pointer.
+        @return True if is_initialised, else False.
+        """
+        return self._is_initialised
+
     def __init__(self):
         """!@brief Default constructor.
         @param self The object pointer.
@@ -71,6 +79,13 @@ class ServiceBase:
         @return None
         """
         self._shutdown_requested = True
+
+    def shutdown(self) -> None:
+        """!@brief Wrap the overridable 'shutdown' function
+        @param self The object pointer.
+        @return None
+        """
+        return self._shutdown()
 
     def _initialise(self) -> bool:
         """!@brief Overridable 'initialise' function **

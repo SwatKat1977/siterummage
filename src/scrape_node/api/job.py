@@ -21,7 +21,7 @@ from common.api_contracts.scrape_node.job import NewJobTaskRequest
 from common.event import Event
 from common.http_status_code import HTTPStatusCode
 from common.mime_type import MIMEType
-from ..event_id import EventID
+from event_id import EventID
 
 class ApiJob:
     __slots__ = ['_event_manager', '_logger', '_quart']
