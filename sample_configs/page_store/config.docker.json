@@ -2,7 +2,7 @@
     "database settings":
     {
         "database": "siterummage",
-        "host": "page-store.rummage.internal",
+        "host": "127.0.0.1",
         "pool_name": "connection_pool",
         "pool_size": 2,
         "port": 4000,

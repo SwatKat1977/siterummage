@@ -20,9 +20,8 @@ from threading import Thread
 from common.logger import Logger, LogType
 from common.messaging_queue import MessagingQueue
 from common.messaging_queue_settings import MessagingQueueSettings
-from page_scraper import PageScraper
 
-class WorkerThread(Thread):
+class MessageQueueThread(Thread):
     """ Thread to handle RabbitMQ Messaging Queue """
 
     processed_results_queue = 'processing_results_queue'
@@ -36,14 +35,13 @@ class WorkerThread(Thread):
         return self._queue_consumer
 
     def __init__(self, settings : MessagingQueueSettings,
-                 logger : Logger, scraper : PageScraper) -> None:
+                 logger : Logger) -> None:
         super().__init__()
 
         self._logger = logger
         self._queue_consumer = MessagingQueue(settings, logger)
-        self._queue_consumer.set_message_processor(self._receive_new_task)
+        self._queue_consumer.set_message_processor(self._receive_page_message)
         self._thread_running = False
-        self._page_scraper = scraper
         self._reconnect_delay = 0
         self._settings = settings
 
@@ -83,27 +81,8 @@ class WorkerThread(Thread):
             time.sleep(reconnect_delay)
             self._queue_consumer.reset_for_reconnect()
 
-    def _receive_new_task(self, _channel, method, _properties, body):
-        msg_body = json.loads(body)
-        url = msg_body['url']
-        task_type = msg_body['task_type']
-        task_id = msg_body['task_id']
-
-        self._logger.log(LogType.Info,
-                         f'Initiated new scrape task for url {url}')
-        links, results = self._page_scraper.scrape_page(url, task_type, task_id)
-        if links:
-            body = { 'link': links }
-            print(body)
-            self._queue_consumer.publish_message('', 
-                                                 self.processed_results_queue,
-                                                 json.dumps(body))
-
-        self._queue_consumer.publish_message('', 
-                                             self.processed_results_queue,
-                                             json.dumps(results))
-
-        self._queue_consumer.acknowledge_message(method.delivery_tag)
+    def _receive_page_message(self, _channel, method, _properties, body):
+        ...
 
     def _get_reconnect_delay(self):
         if self._queue_consumer.was_consuming:
