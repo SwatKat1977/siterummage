@@ -1,0 +1,25 @@
+{
+    "connection":
+    {
+      "username": "siterummage",
+      "password": "FVECLGusm4W4Psjc",
+      "queue host": "127.0.0.1"
+    },
+    "consumer queue":
+    {
+      "queue":
+      {
+        "name": "processing_results_queue",
+        "is durable": true
+      }
+    },
+    "producer queues":
+    {
+      "queues": [
+        {
+            "name": "urls_to_be_processed",
+            "is durable": true
+        }
+      ]
+    }
+}
