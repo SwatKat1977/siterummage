@@ -1,0 +1,11 @@
+{
+    "database settings":
+    {
+        "database": "siterummage",
+        "host": "page-store.rummage.internal",
+        "pool_name": "connection_pool",
+        "pool_size": 2,
+        "port": 4000,
+        "username": "root"
+    }
+}
