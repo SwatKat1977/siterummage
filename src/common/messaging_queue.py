@@ -22,9 +22,9 @@ from common.messaging_queue_settings import MessagingQueueSettings
 
 class MessagingQueue:
     ''' Wrapper class for RabbitMQ functionality '''
-    __slots__ = ['_channel', '_connection', '_consumer_tag', '_is_connected',
-                 '_is_consuming', '_logger', '_message_processor',
-                 '_parameters', '_perform_close', '_reconnect_delay',
+    __slots__ = ['_channel', '_connection', '_consumer_tag', '_fatal_close',
+                 '_is_connected', '_is_consuming', '_logger',
+                 '_message_processor', '_parameters', '_perform_close',
                  '_settings', '_should_reconnect', '_shutdown_complete',
                  '_was_consuming']
 
@@ -44,7 +44,7 @@ class MessagingQueue:
         @param self The object pointer.
         @returns bool identifying state.
         """
-        return self._should_reconnect
+        return self._should_reconnect and not self._fatal_close
 
     def __init__(self, settings : MessagingQueueSettings,
                  logger : Logger) -> Any:
@@ -60,10 +60,10 @@ class MessagingQueue:
         self._is_consuming = False
         self._message_processor = None
         self._perform_close = False
-        self._reconnect_delay = 0
         self._should_reconnect = False
         self._shutdown_complete = False
         self._was_consuming = False
+        self._fatal_close = False
 
         credentials = pika.PlainCredentials(
             self._settings.connection_settings.username,
@@ -101,7 +101,7 @@ class MessagingQueue:
         if not self._perform_close:
             self._perform_close = True
 
-            self._logger.log(LogType.Info, 'Stopping message queue...')
+            self._logger.log(LogType.Info, 'Messaging | Stopping...')
 
             if self._is_consuming:
                 self._stop_consuming()
@@ -109,7 +109,7 @@ class MessagingQueue:
                 self._connection.ioloop.stop()
 
     def shutdown(self):
-        self._logger.log(LogType.Info, 'Shutting message queue...')
+        self._logger.log(LogType.Info, 'Messaging | Shutting down...')
 
         if self._is_consuming:
             self._stop_consuming()
@@ -151,7 +151,6 @@ class MessagingQueue:
         self._is_connected = False
         self._is_consuming = False
         self._perform_close = False
-        self._reconnect_delay = 0
         self._should_reconnect = False
         self._shutdown_complete = False
         self._was_consuming = False
@@ -188,8 +187,9 @@ class MessagingQueue:
     def _on_channel_closed(self, _channel, reason):
 
         if reason.reply_code == self.RABBIT_PRECONDITION_FAILED:
-            self._logger.log(LogType.Info,
+            self._logger.log(LogType.Critical,
                 f"Channel was closed due to {reason.reply_text}")
+            self._fatal_close = True
 
         else:
             self._logger.log(LogType.Info, "Messaging | Channel was closed")

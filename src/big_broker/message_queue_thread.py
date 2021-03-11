@@ -54,9 +54,12 @@ class MessageQueueThread(Thread):
         self._logger.log(LogType.Info, 'Running messaging queue in a thread')
         self._thread_running = True
 
+        reconnect = True
         while self._thread_running:
-            self._queue_consumer.start()
-            self._maybe_reconnect()
+            if reconnect:
+                self._queue_consumer.start()
+
+            reconnect = self._maybe_reconnect()
 
     def stop(self) -> None:
         """!@brief Method called to stop the thread runs, it will perform a
@@ -71,13 +74,17 @@ class MessageQueueThread(Thread):
 
     def _maybe_reconnect(self):
 
-        if self._queue_consumer.should_reconnect:
-            self._queue_consumer.stop()
-            reconnect_delay = self._get_reconnect_delay()
-            self._logger.log(LogType.Info,
-                f'Reconnecting after {reconnect_delay} seconds')
-            time.sleep(reconnect_delay)
-            self._queue_consumer.reset_for_reconnect()
+        if not self._queue_consumer.should_reconnect:
+            return False
+
+        self._queue_consumer.stop()
+        reconnect_delay = self._get_reconnect_delay()
+        self._logger.log(LogType.Info,
+            f'Reconnecting after {reconnect_delay} seconds')
+        time.sleep(reconnect_delay)
+        self._queue_consumer.reset_for_reconnect()
+
+        return True
 
     def _process_scrape_result(self, _channel, method, _properties, body):
         msg_body = json.loads(body)
