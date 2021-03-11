@@ -173,6 +173,7 @@ class MessagingQueue:
         self._channel.add_on_close_callback(self._on_channel_closed)
 
         queue_name = self._settings.queue_consumer_definition.queue.name
+        is_durable = self._settings.queue_consumer_definition.queue.is_durable
 
         # Declare queue for processed urls results and bind it to exchange.
         self._logger.log(LogType.Info,
@@ -180,7 +181,7 @@ class MessagingQueue:
         callback = functools.partial(self._on_queue_declare_ok,
                                      userdata=queue_name)
         self._channel.queue_declare(
-            queue=queue_name, durable=True, callback=callback)
+            queue=queue_name, durable=is_durable, callback=callback)
 
     def _on_channel_closed(self, _channel, _reason):
         self._logger.log(LogType.Info, "Messaging | Channel was closed")
@@ -195,6 +196,8 @@ class MessagingQueue:
             self._connection.close()
 
     def _on_queue_declare_ok(self, _unused_frame, userdata):
+        #pylint: disable=unused-argument
+
         prefetch_count = 1
         self._channel.basic_qos(prefetch_count=prefetch_count,
                                 callback=self._on_queue_qos_ok)
