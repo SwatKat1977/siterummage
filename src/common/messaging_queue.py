@@ -28,6 +28,8 @@ class MessagingQueue:
                  '_settings', '_should_reconnect', '_shutdown_complete',
                  '_was_consuming']
 
+    RABBIT_PRECONDITION_FAILED = 406
+
     @property
     def was_consuming(self) -> bool:
         """!@brief Was queue consuming flag (getter).
@@ -183,8 +185,14 @@ class MessagingQueue:
         self._channel.queue_declare(
             queue=queue_name, durable=is_durable, callback=callback)
 
-    def _on_channel_closed(self, _channel, _reason):
-        self._logger.log(LogType.Info, "Messaging | Channel was closed")
+    def _on_channel_closed(self, _channel, reason):
+
+        if reason.reply_code == self.RABBIT_PRECONDITION_FAILED:
+            self._logger.log(LogType.Info,
+                f"Channel was closed due to {reason.reply_text}")
+
+        else:
+            self._logger.log(LogType.Info, "Messaging | Channel was closed")
 
         self._is_consuming = False
         if self._connection.is_closing or self._connection.is_closed:
@@ -258,10 +266,11 @@ class MessagingQueue:
         self._channel = None
         if self._perform_close:
             self._connection.ioloop.stop()
+
         else:
+            msg = f": {reason.reply_text}" if reason.reply_code != 200 else ''
             self._logger.log(LogType.Info,
-                             'Connection closed, reconnect necessary: ' + \
-                             f'{reason}')
+                             f'Connection closed, reconnect necessary {msg}')
             self._reconnect()
 
     def _stop_consuming(self):
