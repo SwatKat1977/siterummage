@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 import json
-import time
 from threading import Thread
 from common.logger import Logger, LogType
 from common.messaging_queue import MessagingQueue
@@ -39,6 +38,7 @@ class MessageQueueThread(Thread):
         self._logger = logger
         self._queue_consumer = MessagingQueue(settings, logger)
         self._queue_consumer.set_message_processor(self._process_scrape_result)
+        self._queue_consumer.set_reconnect_delay_calc_method(self._get_reconnect_delay)
         self._thread_running = False
         self._reconnect_delay = 0
         self._settings = settings
@@ -59,7 +59,7 @@ class MessageQueueThread(Thread):
             if reconnect:
                 self._queue_consumer.start()
 
-            reconnect = self._maybe_reconnect()
+            reconnect = self._queue_consumer._maybe_reconnect()
 
     def stop(self) -> None:
         """!@brief Method called to stop the thread runs, it will perform a
@@ -71,20 +71,6 @@ class MessageQueueThread(Thread):
 
         self._thread_running = False
         self._queue_consumer.shutdown()
-
-    def _maybe_reconnect(self):
-
-        if not self._queue_consumer.should_reconnect:
-            return False
-
-        self._queue_consumer.stop()
-        reconnect_delay = self._get_reconnect_delay()
-        self._logger.log(LogType.Info,
-            f'Reconnecting after {reconnect_delay} seconds')
-        time.sleep(reconnect_delay)
-        self._queue_consumer.reset_for_reconnect()
-
-        return True
 
     def _process_scrape_result(self, _channel, method, _properties, body):
         msg_body = json.loads(body)

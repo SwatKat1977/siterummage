@@ -16,6 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 from dataclasses import dataclass
 import functools
+import time
 from typing import Any
 import pika
 from common.logger import Logger, LogType
@@ -35,7 +36,8 @@ class MessagingQueue:
     ''' Wrapper class for RabbitMQ functionality '''
     __slots__ = ['_channel', '_connection', '_consumer_tag',
                   '_logger', '_message_processor', '_parameters',
-                  '_queue_state', '_settings']
+                  '_queue_state', '_reconnect_delay_calc_method',
+                  '_settings']
 
     RABBIT_PRECONDITION_FAILED = 406
 
@@ -66,6 +68,7 @@ class MessagingQueue:
         self._consumer_tag = None
         self._queue_state = MessagingQueueState()
         self._message_processor = None
+        self._reconnect_delay_calc_method = None
 
         credentials = pika.PlainCredentials(
             self._settings.connection_settings.username,
@@ -73,13 +76,21 @@ class MessagingQueue:
         self._parameters = pika.ConnectionParameters(
             self._settings.connection_settings.host, credentials=credentials)
 
-    def set_message_processor(self, processor):
+    def set_message_processor(self, processor) -> None:
         """!@brief Set the message processor method.
         @param self The object pointer.
         @param processor Message processor method.
         @returns None.
         """
         self._message_processor = processor
+
+    def set_reconnect_delay_calc_method(self, method) -> None:
+        """!@brief Set the reconnect delay calculation method.
+        @param self The object pointer.
+        @param method Delay calculator method.
+        @returns None.
+        """
+        self._reconnect_delay_calc_method = method
 
     def start(self) -> None:
         """!@brief Start the messaging queue, which runs forever until the
@@ -156,6 +167,25 @@ class MessagingQueue:
         self._queue_state.should_reconnect = False
         self._queue_state.shutdown_complete = False
         self._queue_state.was_consuming = False
+
+    def _maybe_reconnect(self) -> bool:
+
+        if not self._queue_state.should_reconnect:
+            return False
+
+        self.stop()
+
+        if self._reconnect_delay_calc_method:
+            reconnect_delay = self._reconnect_delay_calc_method()
+        else:
+            reconnect_delay = 0
+
+        self._logger.log(LogType.Info,
+            f'Reconnecting after {reconnect_delay} seconds')
+        time.sleep(reconnect_delay)
+        self.reset_for_reconnect()
+
+        return True
 
     def _connect(self):
         self._connection = pika.SelectConnection(
