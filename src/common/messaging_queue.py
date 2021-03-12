@@ -14,19 +14,28 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
+from dataclasses import dataclass
 import functools
 from typing import Any
 import pika
 from common.logger import Logger, LogType
 from common.messaging_queue_settings import MessagingQueueSettings
 
+@dataclass
+class MessagingQueueState:
+    fatal_close: bool = False
+    is_connected: bool = False
+    is_consuming: bool = False
+    perform_close: bool = False
+    should_reconnect: bool = False
+    shutdown_complete: bool = False
+    was_consuming: bool = False
+
 class MessagingQueue:
     ''' Wrapper class for RabbitMQ functionality '''
-    __slots__ = ['_channel', '_connection', '_consumer_tag', '_fatal_close',
-                 '_is_connected', '_is_consuming', '_logger',
-                 '_message_processor', '_parameters', '_perform_close',
-                 '_settings', '_should_reconnect', '_shutdown_complete',
-                 '_was_consuming']
+    __slots__ = ['_channel', '_connection', '_consumer_tag',
+                  '_logger', '_message_processor', '_parameters',
+                  '_queue_state', '_settings']
 
     RABBIT_PRECONDITION_FAILED = 406
 
@@ -36,7 +45,7 @@ class MessagingQueue:
         @param self The object pointer.
         @returns bool identifying state.
         """
-        return self._was_consuming
+        return self._queue_state.was_consuming
 
     @property
     def should_reconnect(self) -> bool:
@@ -44,7 +53,7 @@ class MessagingQueue:
         @param self The object pointer.
         @returns bool identifying state.
         """
-        return self._should_reconnect and not self._fatal_close
+        return self._queue_state.should_reconnect and not self._queue_state.fatal_close
 
     def __init__(self, settings : MessagingQueueSettings,
                  logger : Logger) -> Any:
@@ -54,16 +63,9 @@ class MessagingQueue:
 
         self._channel = None
         self._connection = None
-
         self._consumer_tag = None
-        self._is_connected = False
-        self._is_consuming = False
+        self._queue_state = MessagingQueueState()
         self._message_processor = None
-        self._perform_close = False
-        self._should_reconnect = False
-        self._shutdown_complete = False
-        self._was_consuming = False
-        self._fatal_close = False
 
         credentials = pika.PlainCredentials(
             self._settings.connection_settings.username,
@@ -98,12 +100,12 @@ class MessagingQueue:
         @returns None.
         """
 
-        if not self._perform_close:
-            self._perform_close = True
+        if not self._queue_state.perform_close:
+            self._queue_state.perform_close = True
 
             self._logger.log(LogType.Info, 'Messaging | Stopping...')
 
-            if self._is_consuming:
+            if self._queue_state.is_consuming:
                 self._stop_consuming()
             else:
                 self._connection.ioloop.stop()
@@ -111,7 +113,7 @@ class MessagingQueue:
     def shutdown(self):
         self._logger.log(LogType.Info, 'Messaging | Shutting down...')
 
-        if self._is_consuming:
+        if self._queue_state.is_consuming:
             self._stop_consuming()
 
         if self._connection:
@@ -134,7 +136,7 @@ class MessagingQueue:
         @returns None.
         """
 
-        if not self._is_connected:
+        if not self._queue_state.is_connected:
             raise RuntimeError('Not connected to message queue')
 
         self._channel.basic_publish(exchange=exchange,
@@ -148,12 +150,12 @@ class MessagingQueue:
         self._channel = None
         self._connection = None
         self._consumer_tag = None
-        self._is_connected = False
-        self._is_consuming = False
-        self._perform_close = False
-        self._should_reconnect = False
-        self._shutdown_complete = False
-        self._was_consuming = False
+        self._queue_state.is_connected = False
+        self._queue_state.is_consuming = False
+        self._queue_state.perform_close = False
+        self._queue_state.should_reconnect = False
+        self._queue_state.shutdown_complete = False
+        self._queue_state.was_consuming = False
 
     def _connect(self):
         self._connection = pika.SelectConnection(
@@ -163,7 +165,7 @@ class MessagingQueue:
 
     def _on_connection_open(self, _unused_connection):
         self._logger.log(LogType.Info, 'Messaging | Connection opened')
-        self._is_connected = True
+        self._queue_state.is_connected = True
         self._connection.channel(on_open_callback=self._on_channel_open)
 
     def _on_channel_open(self, channel):
@@ -189,12 +191,12 @@ class MessagingQueue:
         if reason.reply_code == self.RABBIT_PRECONDITION_FAILED:
             self._logger.log(LogType.Critical,
                 f"Channel was closed due to {reason.reply_text}")
-            self._fatal_close = True
+            self._queue_state.fatal_close = True
 
         else:
             self._logger.log(LogType.Info, "Messaging | Channel was closed")
 
-        self._is_consuming = False
+        self._queue_state.is_consuming = False
         if self._connection.is_closing or self._connection.is_closed:
             self._logger.log(LogType.Info,
                              'Connection is closing or already closed')
@@ -240,8 +242,8 @@ class MessagingQueue:
         self._consumer_tag = self._channel.basic_consume(
             self._settings.queue_consumer_definition.queue.name,
             self._message_processor)
-        self._was_consuming = True
-        self._is_consuming = True
+        self._queue_state.was_consuming = True
+        self._queue_state.is_consuming = True
 
     def _on_consumer_cancelled(self, method_frame):
         """ Invoked by pika when RabbitMQ sends a Basic.Cancel for a consumer
@@ -258,13 +260,13 @@ class MessagingQueue:
         self._reconnect()
 
     def _reconnect(self):
-        self._should_reconnect = True
+        self._queue_state.should_reconnect = True
         self.stop()
 
     def _on_connection_closed(self, _unused_connection, reason):
 
         self._channel = None
-        if self._perform_close:
+        if self._queue_state.perform_close:
             self._connection.ioloop.stop()
 
         else:
@@ -284,7 +286,7 @@ class MessagingQueue:
                                        on_stop)
 
     def _on_stop_consume_ok(self, _frame, _userdata):
-        self._is_consuming = False
+        self._queue_state.is_consuming = False
         self._logger.log(LogType.Info,
                          'RabbitMQ acknowledged message consumption stop')
         self._logger.log(LogType.Info, 'Closing the channel')
