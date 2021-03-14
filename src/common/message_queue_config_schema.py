@@ -27,6 +27,7 @@ class ConfigurationSchema:
     # -- Queue Entry definition --
     queue_entry_name = 'name'
     queue_entry_is_durable = 'is durable'
+    queue_entry_exchange_binding = 'exchange binding'
 
     # -- Exchange Entry definition --
     exchange_entry_name = 'name'
@@ -64,6 +65,11 @@ class ConfigurationSchema:
                     queue_entry_is_durable:
                     {
                         "type": "boolean"
+                    },
+                    queue_entry_exchange_binding:
+                    {
+                        "type": "string",
+                        "minLength": 1
                     }
                 },
                 "required": [queue_entry_name, queue_entry_is_durable]

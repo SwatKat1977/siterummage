@@ -93,23 +93,31 @@ class MessagingQueueConfigManager:
         settings = raw_json[schema.element_connection]
         connection_settings = self._process_connection(settings)
 
-        exchanges_settings = []
+        exchanges_settings = None
         if schema.element_exchanges in raw_json:
-            exchanges_settings = raw_json[schema.element_exchanges]
-            settings = self._process_exchanges(exchanges_settings)
+            settings = raw_json[schema.element_exchanges]
+            exchanges_settings = self._process_exchanges(settings)
 
-            if not settings:
+            if not exchanges_settings:
                 return None
 
         consumer_settings = None
         if schema.element_queue_consumer in raw_json:
             settings = raw_json[schema.element_queue_consumer]
-            consumer_settings = self._process_consumer(settings)
+            consumer_settings = self._process_consumer(settings,
+                                                       exchanges_settings)
+
+            if not consumer_settings:
+                return None
 
         producers_settings = None
         if schema.element_queue_producers in raw_json:
             settings = raw_json[schema.element_queue_producers]
-            producers_settings = self._process_producers(settings)
+            producers_settings = self._process_producers(settings,
+                                                         exchanges_settings)
+
+            if not producers_settings:
+                return None
 
         return MessageQueueConfiguration(connection_settings,
                                          consumer_settings,
@@ -129,7 +137,8 @@ class MessagingQueueConfigManager:
         password = settings[schema.connection_password]
         return MessagingServiceConnectSettings(username, password, host)
 
-    def _process_consumer(self, settings) -> MessagingQueueConsumerSettings:
+    def _process_consumer(self, settings, exchanges) -> \
+            MessagingQueueConsumerSettings:
         """!@brief Process the message service consumer queue settings section.
         @param self The object pointer.
         @param settings Raw JSON to process.
@@ -139,12 +148,23 @@ class MessagingQueueConfigManager:
 
         queue = settings[schema.queue_consumer_queue]
 
+        domain_binding = queue[schema.queue_entry_exchange_binding] if \
+            schema.queue_entry_exchange_binding in queue else None
+
+        name = queue[schema.queue_entry_name]
+
+        if domain_binding and not exchanges.exists(domain_binding):
+            self._last_error_msg = f"Messaging queue consumer '{name}' " + \
+                f"tried to bind to a non-existant exchange {domain_binding}"
+            return None
+
         entry = MessagingQueueSettings(queue[schema.queue_entry_name],
                                        queue[schema.queue_entry_is_durable])
 
         return MessagingQueueConsumerSettings(entry)
 
-    def _process_producers(self, settings) -> MessagingQueueProducersSettings:
+    def _process_producers(self, settings, exchanges) -> \
+            MessagingQueueProducersSettings:
         """!@brief Process the message service settings section.
         @param self The object pointer.
         @param settings Raw JSON to process.
@@ -157,6 +177,17 @@ class MessagingQueueConfigManager:
         queues = settings[schema.queue_producers_queues]
 
         for queue in queues:
+
+            domain_binding = queue[schema.queue_entry_exchange_binding] if \
+                schema.queue_entry_exchange_binding in queue else None
+
+            name = queue[schema.queue_entry_name]
+
+            if domain_binding and not exchanges.exists(domain_binding):
+                self._last_error_msg = f"Messaging queue producer '{name}'" + \
+                    f" tried to bind to non-existant exchange {domain_binding}"
+                return None
+
             entry = MessagingQueueSettings(queue[schema.queue_entry_name],
                                            queue[schema.queue_entry_is_durable])
             producers.add_queue(entry)
