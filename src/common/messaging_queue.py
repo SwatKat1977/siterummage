@@ -24,11 +24,10 @@ from common.messaging_queue_settings import MessagingQueueSettings
 
 @dataclass
 class MessagingQueueState:
-    fatal_close: bool = False
     is_connected: bool = False
     is_consuming: bool = False
     perform_close: bool = False
-    should_reconnect: bool = False
+    should_reconnect: bool = True
     shutdown_complete: bool = False
     was_consuming: bool = False
 
@@ -164,9 +163,21 @@ class MessagingQueue:
         self._queue_state.is_connected = False
         self._queue_state.is_consuming = False
         self._queue_state.perform_close = False
-        self._queue_state.should_reconnect = False
+        self._queue_state.should_reconnect = True
         self._queue_state.shutdown_complete = False
         self._queue_state.was_consuming = False
+
+    def _main_loop(self) -> None:
+        """!@brief Messaging queue main processing loop, which runs until the
+                   application closes or a reconnect needs to occur.
+        @param self The object pointer.
+        @returns None.
+        """
+
+        self._logger.log(LogType.Info, 'Messaging | Starting...')
+        self._connect()
+        self._connection.ioloop.start()
+        self._logger.log(LogType.Info, 'Messaging | Ended...')
 
     def _maybe_reconnect(self) -> bool:
 
@@ -287,10 +298,6 @@ class MessagingQueue:
 
     def _on_connection_open_error(self, _unused_connection, err):
         self._logger.log(LogType.Info, f'Connection open failed: {err}')
-        self._reconnect()
-
-    def _reconnect(self):
-        self._queue_state.should_reconnect = True
         self.stop()
 
     def _on_connection_closed(self, _unused_connection, reason):
@@ -303,7 +310,7 @@ class MessagingQueue:
             msg = f": {reason.reply_text}" if reason.reply_code != 200 else ''
             self._logger.log(LogType.Info,
                              f'Connection closed, reconnect necessary {msg}')
-            self._reconnect()
+            self.stop()
 
     def _stop_consuming(self):
 
