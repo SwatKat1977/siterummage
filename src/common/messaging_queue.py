@@ -54,7 +54,7 @@ class MessagingQueue:
         @param self The object pointer.
         @returns bool identifying state.
         """
-        return self._queue_state.should_reconnect and not self._queue_state.fatal_close
+        return self._queue_state.should_reconnect
 
     def __init__(self, settings : MessagingQueueSettings,
                  logger : Logger) -> Any:
@@ -232,7 +232,7 @@ class MessagingQueue:
         if reason.reply_code == self.RABBIT_PRECONDITION_FAILED:
             self._logger.log(LogType.Critical,
                 f"Channel was closed due to {reason.reply_text}")
-            self._queue_state.fatal_close = True
+            self._queue_state.should_reconnect = False
 
         else:
             self._logger.log(LogType.Info, "Messaging | Channel was closed")
