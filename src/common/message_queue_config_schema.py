@@ -22,15 +22,21 @@ class ConfigurationSchema:
     element_connection = 'connection'
     element_queue_consumer = 'consumer queue'
     element_queue_producers = 'producer queues'
+    element_exchanges = 'exchanges'
 
     # -- Queue Entry definition --
     queue_entry_name = 'name'
     queue_entry_is_durable = 'is durable'
 
+    # -- Exchange Entry definition --
+    exchange_entry_name = 'name'
+    exchange_entry_type = 'exchange type'
+
     # -- Messaging Service sub-elements --
     connection_username = 'username'
     connection_password = 'password'
     connection_queue_host = 'queue host'
+    connection_precondition_failed_reconnect = 'reconnect on precondition failed'
 
     # -- Messaging Consumer sub-elements --
     queue_consumer_queue = 'queue'
@@ -61,6 +67,25 @@ class ConfigurationSchema:
                     }
                 },
                 "required": [queue_entry_name, queue_entry_is_durable]
+            },
+
+            "exchange_entry":
+            {
+                "type": "object",
+                "additionalProperties" : False,
+                "properties":
+                {
+                    "additionalProperties" : False,
+                    exchange_entry_name:
+                    {
+                        "type": "string"
+                    },
+                    exchange_entry_type:
+                    {
+                        "type": "string"
+                    }
+                },
+                "required": [exchange_entry_name, exchange_entry_type]
             }
         },
 
@@ -85,10 +110,15 @@ class ConfigurationSchema:
                     connection_queue_host:
                     {
                         "type" : "string"
+                    },
+                    connection_precondition_failed_reconnect:
+                    {
+                        "type" : "boolean"
                     }
                 },
                 "required" : [connection_username,
                               connection_password,
+                              connection_precondition_failed_reconnect,
                               connection_queue_host]
             },
             element_queue_consumer:
@@ -113,6 +143,13 @@ class ConfigurationSchema:
                     }
                 },
                 "required" : [queue_producers_queues]
+            },
+
+            element_exchanges:
+            {
+                "type": "array",
+                "items": {"$ref": "#/definitions/exchange_entry"},
+                "default": []
             }
         },
         "required" : [element_connection]

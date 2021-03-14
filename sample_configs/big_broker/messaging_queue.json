@@ -3,14 +3,21 @@
     {
       "username": "siterummage",
       "password": "FVECLGusm4W4Psjc",
-      "queue host": "127.0.0.1"
+      "queue host": "127.0.0.1",
+      "reconnect on precondition failed": false
     },
+    "exchanges": [
+      {
+        "name": "",
+        "exchange type": "direct"
+      }
+    ],
     "consumer queue":
     {
       "queue":
       {
         "name": "processing_results_queue",
-        "is durable": true
+        "is durable": false
       }
     },
     "producer queues":
