@@ -47,6 +47,37 @@ class MessagingQueueSettings:
         self._name = name
         self._is_durable = is_durable
 
+class MessagingExchangeSettings:
+    """ Settings related to a messaging exchange """
+    __slots__ = ['_name', '_exchange_type']
+    #pylint: disable=too-few-public-methods
+
+    @property
+    def name(self) -> str:
+        """!@brief Name of the message exchange (Getter).
+        @param self The object pointer.
+        @returns str.
+        """
+        return self._name
+
+    @property
+    def exchange_type(self) -> str:
+        """!@brief Type of exchange (Getter).
+        @param self The object pointer.
+        @returns str.
+        """
+        return self._exchange_type
+
+    def __init__(self, name, exchange_type) -> Any:
+        """!@brief MessagingExchangeSettings constructor.
+        @param self The object pointer.
+        @param name Exchange name.
+        @param exchange_type Type of exchange.
+        @returns Any.
+        """
+        self._name = name
+        self._exchange_type = exchange_type
+
 class MessagingServiceConnectSettings:
     """ Settings related to the messaging service connection """
     __slots__ = ['_username', '_password', '_host']
@@ -132,10 +163,38 @@ class MessagingQueueProducersSettings:
     def add_queue(self, new_queue : MessagingQueueSettings) ->  None:
         self._queues.append(new_queue)
 
+class MessagingExchangesSettings:
+    """ Settings related to a messaging queue exchanges """
+    __slots__ = ['_exchanges']
+    #pylint: disable=too-few-public-methods
+
+    @property
+    def exchanges(self) -> List[MessagingExchangeSettings]:
+        """!@brief Messaging exchanges (getter).
+        @param self The object pointer.
+        @returns List of MessagingExchangeSettings.
+        """
+        return self._exchanges
+
+    def __init__(self) -> Any:
+        """!@brief MessagingExchangesSettings constructor.
+        @param self The object pointer.
+        @returns Any.
+        """
+        self._exchanges = []
+
+    def add(self, new_exchange : MessagingExchangeSettings) ->  None:
+        self._exchanges.append(new_exchange)
+
+    def exists(self, name : str) ->  bool:
+        entry = [exch for exch in self._exchanges if exch.name == name]
+
+        return True if entry else False
+
 class MessageQueueConfiguration:
     ''' Message queue configuration '''
     __slots__ = ['_connection_settings', '_consumer_settings',
-                 '_producers_settings']
+                 '_exchanges_settings', '_producers_settings']
 
     @property
     def connection_settings(self) -> MessagingServiceConnectSettings:
@@ -161,8 +220,17 @@ class MessageQueueConfiguration:
         """
         return self._producers_settings
 
+    @property
+    def exchanges_settings(self) -> MessagingExchangesSettings:
+        """!@brief Settings for a list of exchanges (Getter).
+        @param self The object pointer.
+        @returns MessagingExchangesSettings.
+        """
+        return self._exchanges_settings
+
     def __init__(self, connection_settings, consumer_settings,
-                 producers_settings):
+                 producers_settings, exchanges_settings):
         self._connection_settings = connection_settings
         self._consumer_settings = consumer_settings
         self._producers_settings = producers_settings
+        self._exchanges_settings = exchanges_settings

@@ -19,7 +19,8 @@ from typing import Union
 import jsonschema
 from common.message_queue_configuration import MessageQueueConfiguration, \
      MessagingQueueSettings, MessagingQueueConsumerSettings, \
-     MessagingServiceConnectSettings, MessagingQueueProducersSettings
+     MessagingServiceConnectSettings, MessagingQueueProducersSettings, \
+     MessagingExchangeSettings, MessagingExchangesSettings
 from common.message_queue_config_schema import ConfigurationSchema as schema
 
 class MessagingQueueConfigManager:
@@ -92,6 +93,14 @@ class MessagingQueueConfigManager:
         settings = raw_json[schema.element_connection]
         connection_settings = self._process_connection(settings)
 
+        exchanges_settings = []
+        if schema.element_exchanges in raw_json:
+            exchanges_settings = raw_json[schema.element_exchanges]
+            settings = self._process_exchanges(exchanges_settings)
+
+            if not settings:
+                return None
+
         consumer_settings = None
         if schema.element_queue_consumer in raw_json:
             settings = raw_json[schema.element_queue_consumer]
@@ -104,7 +113,8 @@ class MessagingQueueConfigManager:
 
         return MessageQueueConfiguration(connection_settings,
                                          consumer_settings,
-                                         producers_settings)
+                                         producers_settings,
+                                         exchanges_settings)
 
     def _process_connection(self, settings) -> MessagingServiceConnectSettings:
         """!@brief Process the message service connection settings section.
@@ -152,3 +162,36 @@ class MessagingQueueConfigManager:
             producers.add_queue(entry)
 
         return producers
+
+    def _process_exchanges(self, settings) -> MessagingExchangeSettings:
+        """!@brief Process the message exchange settings section.
+        @param self The object pointer.
+        @param settings Raw JSON to process.
+        @returns MessagingServiceSettings.
+        """
+        #pylint: disable=no-self-use
+
+        exchanges = MessagingExchangesSettings()
+
+        duplicate = []
+
+        for queue in settings:
+            name = queue[schema.exchange_entry_name]
+
+            if exchanges.exists(name):
+                duplicate.append(name)
+                continue
+
+            entry = MessagingExchangeSettings(queue[schema.exchange_entry_name],
+                                              queue[schema.exchange_entry_type])
+            exchanges.add(entry)
+
+        if duplicate:
+            dupe_list = ''.join(duplicate)
+            plural = 's' if len(duplicate) > 1 else ''
+            self._last_error_msg = f"Duplicate message exchange{plural} " + \
+                f"have been defined: {dupe_list}"
+            self._detailed_last_error_msg = ''
+            return None
+
+        return exchanges

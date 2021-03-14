@@ -78,11 +78,13 @@ class ConfigurationSchema:
                     "additionalProperties" : False,
                     exchange_entry_name:
                     {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1, 
                     },
                     exchange_entry_type:
                     {
-                        "type": "string"
+                        "type": "string",
+                        "enum": ["direct", "fanout", "headers", "topic"]
                     }
                 },
                 "required": [exchange_entry_name, exchange_entry_type]
