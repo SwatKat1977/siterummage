@@ -21,7 +21,8 @@ from common.crypto_utils import CryptoUtils
 from common.logger import Logger, LogType
 from common.info import BUILD_NO, COPYRIGHT_TEXT, CORE_VERSION, LICENSE_TEXT
 from common.message_queue_config_mananger import MessagingQueueConfigManager
-from common.messaging_queue_settings import MessagingQueueSettings, QueueEntry
+from common.messaging_queue_settings import ExchangeEntry, \
+                                            MessagingQueueSettings, QueueEntry
 from common.service_base import ServiceBase
 from .api.node_management import ApiNodeManagement
 from .api.schedule import ApiSchedule
@@ -226,6 +227,13 @@ class Service(ServiceBase):
                 entry.name = producer.name
                 entry.is_durable = producer.is_durable
                 settings.publishing_queues.add_queue(entry)
+
+        if self._messaging_config.exchanges_settings:
+            for exchange in self._messaging_config.exchanges_settings.exchanges:
+                entry = ExchangeEntry()
+                entry.name = exchange.name
+                entry.exchange_type = exchange.exchange_type
+                settings.exchanges.add(entry)
 
         self._messaging_thread = MessageQueueThread(settings, self._logger)
         self._messaging_thread.start()

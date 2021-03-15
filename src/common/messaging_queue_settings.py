@@ -123,7 +123,7 @@ class QueueEntry:
 
     @property
     def is_durable(self) -> str:
-        """!@brief RabbitMQ host (Getter).
+        """!@brief RabbitMQ is durable (Getter).
         @param self The object pointer.
         @returns string.
         """
@@ -141,6 +141,48 @@ class QueueEntry:
     def __init__(self) -> Any:
         self._name = 'default'
         self._is_durable = False
+
+class ExchangeEntry:
+    ''' Definition of an exchange '''
+    __slots__ = ['_exchange_type', '_name' ]
+
+    @property
+    def name(self) -> str:
+        """!@brief RabbitMQ exchange name (Getter).
+        @param self The object pointer.
+        @returns string.
+        """
+        return self._name
+
+    @name.setter
+    def name(self, value) -> None:
+        """!@brief RabbitMQ exchange name (Setter).
+        @param self The object pointer.
+        @param value New queue name.
+        @returns None.
+        """
+        self._name = value
+
+    @property
+    def exchange_type(self) -> str:
+        """!@brief RabbitMQ exchange type (Getter).
+        @param self The object pointer.
+        @returns string.
+        """
+        return self._exchange_type
+
+    @exchange_type.setter
+    def exchange_type(self, value) -> None:
+        """!@brief RabbitMQ exchange type (Setter).
+        @param self The object pointer.
+        @param value New exchange type.
+        @returns None.
+        """
+        self._exchange_type = value
+
+    def __init__(self) -> Any:
+        self._exchange_type = 'topic'
+        self._name = 'default'
 
 class QueueConsumerDefinition:
     ''' Definition of the queue consumer '''
@@ -171,10 +213,24 @@ class PublishingQueues:
     def add_queue(self, queue_entry):
         self._queues.append(queue_entry)
 
+class Exchanges:
+    ''' Definition of a list of exchanges we bind to '''
+    __slots__ = ['_exchanges']
+
+    @property
+    def exchanges(self):
+        return self._exchanges.copy()
+
+    def __init__(self):
+        self._exchanges = []
+
+    def add(self, entry):
+        self._exchanges.append(entry)
+
 class MessagingQueueSettings:
     ''' Messaging queue settings '''
     #__pylint: disable=too-few-public-methods
-    __slots__ = ['_connection_settings', '_publishing_queues',
+    __slots__ = ['_connection_settings', '_exchanges', '_publishing_queues',
                  '_queue_consumer_definition']
 
     @property
@@ -186,12 +242,12 @@ class MessagingQueueSettings:
         return self._connection_settings
 
     @property
-    def queue_consumer_definition(self) -> QueueConsumerDefinition:
-        """!@brief The RabbitMQ queue consumer definition (Getter).
+    def exchanges(self) -> Exchanges:
+        """!@brief RabbitMQ exchanges (Getter).
         @param self The object pointer.
-        @returns QueueConsumerDefinition.
+        @returns Exchanges.
         """
-        return self._queue_consumer_definition
+        return self._exchanges
 
     @property
     def publishing_queues(self) -> PublishingQueues:
@@ -201,11 +257,20 @@ class MessagingQueueSettings:
         """
         return self._publishing_queues
 
+    @property
+    def queue_consumer_definition(self) -> QueueConsumerDefinition:
+        """!@brief The RabbitMQ queue consumer definition (Getter).
+        @param self The object pointer.
+        @returns QueueConsumerDefinition.
+        """
+        return self._queue_consumer_definition
+
     def __init__(self) -> Any:
         """!@brief MessagingQueueSettings class constructor.
         @param self The object pointer.
         @returns Any.
         """
         self._connection_settings = ConnectionSettings()
+        self._exchanges = Exchanges()
         self._queue_consumer_definition = QueueConsumerDefinition()
         self._publishing_queues = PublishingQueues()

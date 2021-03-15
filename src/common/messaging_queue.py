@@ -16,6 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 from dataclasses import dataclass
 import functools
+from threading import ExceptHookArgs
 import time
 from typing import Any
 import pika
@@ -218,6 +219,21 @@ class MessagingQueue:
 
         queue_name = self._settings.queue_consumer_definition.queue.name
         is_durable = self._settings.queue_consumer_definition.queue.is_durable
+
+        if self._settings.exchanges.exchanges:
+
+            self._logger.log(LogType.Info,
+                             'Messaging | Declaring exchanges...')
+
+            for exchange in self._settings.exchanges.exchanges:
+                name = exchange.name
+                exchange_type = exchange.exchange_type
+
+                self._logger.log(LogType.Info,
+                                 "Messaging | Declared message exchange " + \
+                                 f"'{name}' | Type = {exchange_type}")
+                self._channel.exchange_declare(exchange=name,
+                                               exchange_type=exchange_type)
 
         # Declare queue for processed urls results and bind it to exchange.
         self._logger.log(LogType.Info,
