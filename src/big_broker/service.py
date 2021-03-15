@@ -210,7 +210,6 @@ class Service(ServiceBase):
     def _create_message_queue_thread(self) -> None:
         conn_settings = self._messaging_config.connection_settings
         consumer_settings = self._messaging_config.consumer_settings
-        producers_settings = self._messaging_config.producers_settings
 
         settings = MessagingQueueSettings()
         settings.connection_settings.username = conn_settings.username
@@ -221,11 +220,12 @@ class Service(ServiceBase):
         settings.queue_consumer_definition.queue.name = \
             consumer_settings.queue.name
 
-        for producer in producers_settings.queues:
-            entry = QueueEntry()
-            entry.name = producer.name
-            entry.is_durable = producer.is_durable
-            settings.publishing_queues.add_queue(entry)
+        if self._messaging_config.producers_settings:
+            for producer in self._messaging_config.producers_settings.queues:
+                entry = QueueEntry()
+                entry.name = producer.name
+                entry.is_durable = producer.is_durable
+                settings.publishing_queues.add_queue(entry)
 
         self._messaging_thread = MessageQueueThread(settings, self._logger)
         self._messaging_thread.start()
