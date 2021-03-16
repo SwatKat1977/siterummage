@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 import json
+from json.decoder import JSONDecodeError
 from threading import Thread
 from common.logger import Logger, LogType
 from common.messaging_queue import MessagingQueue
@@ -73,8 +74,12 @@ class MessageQueueThread(Thread):
         self._queue_consumer.shutdown()
 
     def _process_scrape_result(self, _channel, method, _properties, body):
-        msg_body = json.loads(body)
-        self._logger.log(LogType.Debug, f" [x] received {msg_body}")
+        try:
+            msg_body = json.loads(body)
+            self._logger.log(LogType.Debug, f" [x] received {msg_body}")
+        except JSONDecodeError:
+            pass
+
         self._queue_consumer.acknowledge_message(method.delivery_tag)
 
     def _get_reconnect_delay(self):

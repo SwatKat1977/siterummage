@@ -216,10 +216,15 @@ class Service(ServiceBase):
         settings.connection_settings.username = conn_settings.username
         settings.connection_settings.password = conn_settings.password
         settings.connection_settings.host = conn_settings.host
+
         settings.queue_consumer_definition.queue.is_durable = \
             consumer_settings.queue.is_durable
         settings.queue_consumer_definition.queue.name = \
             consumer_settings.queue.name
+        settings.queue_consumer_definition.queue.exchange_binding = \
+            consumer_settings.queue.exchange_binding
+        settings.queue_consumer_definition.queue.exchange_routing_keys = \
+            consumer_settings.queue.exchange_routing_keys
 
         if self._messaging_config.producers_settings:
             for producer in self._messaging_config.producers_settings.queues:

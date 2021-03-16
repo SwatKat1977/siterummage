@@ -18,7 +18,8 @@ from typing import Any, List
 
 class MessagingQueueSettings:
     """ Settings related to a messaging queue """
-    __slots__ = ['_name', '_is_durable']
+    __slots__ = ['_exchange_binding', '_exchange_routing_keys', '_is_durable',
+                 '_name']
     #pylint: disable=too-few-public-methods
 
     @property
@@ -37,13 +38,34 @@ class MessagingQueueSettings:
         """
         return self._is_durable
 
-    def __init__(self, name, is_durable) -> Any:
+    @property
+    def exchange_binding(self) -> str:
+        """!@brief Message queue exchange binding (Getter).
+        @param self The object pointer.
+        @returns bool.
+        """
+        return self._exchange_binding
+
+    @property
+    def exchange_routing_keys(self) -> str:
+        """!@brief RabbitMQ queue exchange routing keys (Getter).
+        @param self The object pointer.
+        @returns string.
+        """
+        return self._exchange_routing_keys
+
+    def __init__(self, name, is_durable, exchange_binding,
+                 exchange_routing_keys) -> Any:
         """!@brief MessagingQueueSettings constructor.
         @param self The object pointer.
         @param name Queue name.
         @param is_durable Is queue durable flag.
+        @param exchange_binding Exchange the queue is bound to.
+        @param exchange_routing_keys Routing keys for exchange and queue.
         @returns Any.
         """
+        self._exchange_binding = exchange_binding
+        self._exchange_routing_keys = exchange_routing_keys
         self._name = name
         self._is_durable = is_durable
 

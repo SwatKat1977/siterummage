@@ -28,6 +28,7 @@ class ConfigurationSchema:
     queue_entry_name = 'name'
     queue_entry_is_durable = 'is durable'
     queue_entry_exchange_binding = 'exchange binding'
+    queue_entry_exchange_routing_keys = 'exchange routing keys'
 
     # -- Exchange Entry definition --
     exchange_entry_name = 'name'
@@ -70,9 +71,21 @@ class ConfigurationSchema:
                     {
                         "type": "string",
                         "minLength": 1
+                    },
+
+                    queue_entry_exchange_routing_keys:
+                    {
+                        "type": "array",
+                        "items": { "type": "string"},
+                        "minItems": 1,
+                        "uniqueItems": True
                     }
                 },
-                "required": [queue_entry_name, queue_entry_is_durable]
+                "required": [queue_entry_name, queue_entry_is_durable],
+                "dependencies":
+                {
+                    queue_entry_exchange_binding: [queue_entry_exchange_routing_keys]
+                }
             },
 
             "exchange_entry":

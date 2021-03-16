@@ -102,7 +102,8 @@ class ConnectionSettings:
 
 class QueueEntry:
     ''' Definition of a queue '''
-    __slots__ = ['_is_durable', '_name' ]
+    __slots__ = ['_exchange_binding', '_exchange_routing_keys', '_is_durable',
+                 '_name' ]
 
     @property
     def name(self) -> str:
@@ -138,9 +139,45 @@ class QueueEntry:
         """
         self._is_durable = value
 
+    @property
+    def exchange_binding(self) -> str:
+        """!@brief RabbitMQ queue exchange binding (Getter).
+        @param self The object pointer.
+        @returns string.
+        """
+        return self._exchange_binding
+
+    @exchange_binding.setter
+    def exchange_binding(self, value) -> None:
+        """!@brief RabbitMQ queue exchange binding (Setter).
+        @param self The object pointer.
+        @param value Exchange to bind to.
+        @returns None.
+        """
+        self._exchange_binding = value
+
+    @property
+    def exchange_routing_keys(self) -> str:
+        """!@brief RabbitMQ queue exchange routing keys (Getter).
+        @param self The object pointer.
+        @returns string.
+        """
+        return self._exchange_routing_keys
+
+    @exchange_routing_keys.setter
+    def exchange_routing_keys(self, value) -> None:
+        """!@brief RabbitMQ queue exchange keys (Setter).
+        @param self The object pointer.
+        @param value Exchange routing keys.
+        @returns None.
+        """
+        self._exchange_routing_keys = value
+
     def __init__(self) -> Any:
-        self._name = 'default'
+        self._exchange_binding = None
+        self._exchange_routing_keys = None
         self._is_durable = False
+        self._name = 'default'
 
 class ExchangeEntry:
     ''' Definition of an exchange '''

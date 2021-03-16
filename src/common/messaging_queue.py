@@ -265,6 +265,21 @@ class MessagingQueue:
     def _on_queue_declare_ok(self, _unused_frame, userdata):
         #pylint: disable=unused-argument
 
+        settings = self._settings._queue_consumer_definition
+
+        if settings.queue.exchange_binding:
+            routing_keys = self._settings._queue_consumer_definition.queue.exchange_routing_keys
+
+            exchange = settings.queue.exchange_binding
+            queue = settings.queue.name
+
+            for key in routing_keys:
+                self._logger.log(LogType.Info,
+                                 f"Binding queue '{queue}' to exchange " + \
+                                 f"'{exchange}' with routing key '{key}'")
+                self._channel.queue_bind(exchange=exchange, queue=queue,
+                                         routing_key=key)
+
         prefetch_count = 1
         self._channel.basic_qos(prefetch_count=prefetch_count,
                                 callback=self._on_queue_qos_ok)

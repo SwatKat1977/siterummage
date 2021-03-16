@@ -158,8 +158,15 @@ class MessagingQueueConfigManager:
                 f"tried to bind to a non-existant exchange {domain_binding}"
             return None
 
+        exchange_binding = None
+        exchange_routing_keys = None
+        if schema.queue_entry_exchange_binding in queue:
+            exchange_binding = queue[schema.queue_entry_exchange_binding]
+            exchange_routing_keys = queue[schema.queue_entry_exchange_routing_keys]
+
         entry = MessagingQueueSettings(queue[schema.queue_entry_name],
-                                       queue[schema.queue_entry_is_durable])
+                                       queue[schema.queue_entry_is_durable],
+                                       exchange_binding, exchange_routing_keys)
 
         return MessagingQueueConsumerSettings(entry)
 
@@ -188,8 +195,15 @@ class MessagingQueueConfigManager:
                     f" tried to bind to non-existant exchange {domain_binding}"
                 return None
 
+            exchange_binding = None
+            exchange_routing_keys = None
+            if schema.queue_entry_exchange_binding in queue:
+                exchange_binding = queue[schema.queue_entry_exchange_binding]
+                exchange_routing_keys = queue[schema.queue_entry_exchange_routing_keys]
+
             entry = MessagingQueueSettings(queue[schema.queue_entry_name],
-                                           queue[schema.queue_entry_is_durable])
+                                           queue[schema.queue_entry_is_durable],
+                                           exchange_binding, exchange_routing_keys)
             producers.add_queue(entry)
 
         return producers
